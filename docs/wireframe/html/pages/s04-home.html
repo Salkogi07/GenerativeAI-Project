@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>S-04 지도 홈 · Pin it! 와이어프레임</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="phone"><div class="scr" data-nav="홈">
+  <div class="ab" style="border:0"><span class="sp brand">Pin it!</span><span style="font-size:12px;color:var(--g1)">성수동</span></div>
+  <div class="map" style="flex:1">
+    <a class="pin" href="s07-pin.html" style="left:20%;top:28%"></a>
+    <a class="pin" href="s07-pin.html" style="left:44%;top:38%"></a>
+    <a class="pin" href="s07-pin.html" style="left:72%;top:32%"></a>
+    <a class="pin g" href="s07-pin.html" style="left:60%;top:58%"></a>
+    <a class="pin" href="s07-pin.html" style="left:28%;top:66%"></a>
+    <i class="me" style="left:50%;top:50%"></i>
+
+    <div class="float" style="left:16px;right:16px;top:12px">
+      <a class="inp shadow" href="s05-search-input.html" style="margin:0;color:var(--g2)"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>장소, 키워드 검색</a>
+    </div>
+    <div class="float" style="left:16px;right:0;top:70px;display:flex;gap:6px;overflow-x:auto;padding-right:16px">
+      <span class="chip on dash">전체</span><span class="chip dash">카페</span><span class="chip dash">맛집</span><span class="chip dash">전시</span><span class="chip dash">산책</span>
+    </div>
+
+    <span class="fab" style="right:16px;bottom:96px" aria-label="내 위치"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></span>
+    <a class="float btn fit" href="s06-pin-new.html" style="right:16px;bottom:28px;height:56px;border-radius:28px;box-shadow:0 2px 6px rgba(0,0,0,.25)">+ 핀 찍기</a>
+    <span class="osm">© OpenStreetMap contributors</span>
+  </div>
+  <div class="demo">시연용 가상 데이터 · 성수동</div>
+</div></div>
+<script src="../assets/wire.js"></script>
+</body>
+</html>
