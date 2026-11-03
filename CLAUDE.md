@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-**Pin it!** is a mobile web prototype for finding and sharing location pins and wishlists, with reviews that show whether they are ads. Right now the repo has planning documents only, and no app code. The root `index.html` is an empty placeholder.
+**Pin it!** is a mobile web prototype for finding and sharing location pins and wishlists, with reviews that show whether they are ads. The repo has planning documents (`docs/`) and a browser-only HTML prototype (`prototype/`). The real React/Supabase app is not built yet. The root `index.html` only redirects (meta refresh) to `prototype/pages/index.html`.
 
 The source of truth is [docs/prd/Pin it! PRD v1.0 (확정본).pdf](docs/prd/). Read it before you design or build anything. When the 기획서 (proposal) and the 실습 (lab) disagree, the PRD follows 실습 2·3.
 
@@ -27,6 +27,45 @@ Product rules that every screen and table must follow:
   - Accounts younger than 7 days can post 3 reviews a day.
   - Up to 3 photos, 5 MB each.
   - Suggest merging when another pin is within 30 m.
+
+## Prototype (`prototype/`)
+
+A clickable HTML/CSS/JS prototype that looks like the real service. Open `prototype/pages/index.html` (the start screen) in a browser; there is no build step.
+
+- **Data:** everything is demo data in the browser's localStorage, under keys prefixed `pinit.`. Seed data lives in `js/data.js`.
+  - Demo accounts: `demo@pinit.kr` / `pinit1234` (a new account, so the review limit applies) and `admin@pinit.kr` / `pinit1234` (admin).
+  - **Login is stubbed for now (user's request; real checks come later).** Pressing 로그인 always succeeds. It logs in as the account whose email was typed, or as `demo@pinit.kr` if that email doesn't exist. The password is not checked.
+    - Restore the checks in `js/pages/login.js` when login is reworked: password match, the unverified-email notice (`#unverified`) and resend.
+  - Place search results are the fixed `PLACES` list, which stands in for Kakao.
+  - AI verdicts are the fixed `AI_EXAMPLES`. They appear only on `admin.html`, and must always carry the "예시 데이터" badge.
+- **Map:** Leaflet 1.9.4 from cdnjs, with **no tile layer for now**. The user asked not to load real maps yet, so the map shows a grid background (`.leaflet-container` in `common.css`) with pins only.
+  - **When tiles are added:** add `L.tileLayer` in `makeMap` (`js/map.js`).
+  - OSM standard tiles work only over `http://` (for example `cd prototype && python -m http.server`, then open http://localhost:8000/pages/). Opened as `file://` they return an "Access blocked" tile because there is no Referer.
+  - CARTO returns an "API key required" tile. OpenTopoMap works without a Referer.
+- **Leaflet link color:** Leaflet sets `.leaflet-container a{color:#0078A8}`, which overrides the color of any `<a>` placed over a map. Style those links with `.map .<class>`, as `common.css` does for `.fab-main` and `.preview`.
+- **User-facing only:** pages contain no screen IDs, design notes or wireframe markers.
+
+### File organization rule (keep it)
+
+| What | Where |
+|---|---|
+| Page markup | `prototype/pages/<page>.html`. Every HTML file lives here; pages link to each other by bare file name and load assets via `../css/`, `../js/`. |
+| Shared styles | `css/common.css` |
+| One page's styles | `css/pages/<page>.css` |
+| Shared scripts | `js/core.js` (DOM, storage, dates) → `js/data.js` (seed data, session, `needLogin`) → `js/ui.js` (icons, tab bar, toast, dialog, sheet, review card) → `js/map.js` (Leaflet helpers). Load them in this order. |
+| One page's behavior | `js/pages/<page>.js`. Login, signup and verify also share `js/pages/auth.js`. |
+
+- **HTML holds markup only.** No inline `<script>` blocks, no `<style>` blocks, no `style=""` attributes.
+- **HTML built by JS uses classes only.** Never put `style=` in template strings.
+  - The one exception is a data-driven value. Set it with `el.style.<prop>` after rendering, as `admin.js` does for the confidence bar width.
+- **Check after edits** (prints any violations and missing local files):
+  ```sh
+  cd prototype/pages && python -I -c "import re,glob,os;b=[(f,'inline') for f in glob.glob('*.html') if re.search(r'<script(?![^>]*\bsrc=)[^>]*>|<style|\sstyle=',open(f,encoding='utf-8').read())]+[(f,'style=') for f in glob.glob('../js/**/*.js',recursive=True) if re.search(r'\sstyle=',open(f,encoding='utf-8').read())]+[(f,h) for f in glob.glob('*.html') for h in re.findall(r'(?:href|src)=\"([^\"#?]+)',open(f,encoding='utf-8').read()) if not h.startswith('http') and not os.path.exists(h)];print(b)"
+  ```
+- **JS error check:** run headless Chrome with `--enable-logging=stderr --v=0` and grep for `CONSOLE`.
+  - Pages that need a login: open a scratch `file://` page first that sets `localStorage['pinit.session']` and then redirects. All `file://` pages share one localStorage.
+  - Chrome's minimum window width is about 500px, so narrower screenshots are cropped.
+- **No device frame:** the prototype shows only the service page. There is no phone bezel, status bar or gesture bar (the user asked for this). It is full screen on phones, and on screens wider than 480px it renders as a centered 480px column (`.phone` in `common.css`). Don't add device chrome back.
 
 ## Wireframes (`docs/wireframe/`)
 

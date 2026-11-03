@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>로그인 · Pin it!</title>
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/pages/auth.css">
+</head>
+<body>
+<div class="phone"><div class="scr">
+  <div class="top"><span class="brand">Pin it!</span><button class="icon-btn" data-back="index.html" aria-label="닫기"><i data-i="close"></i></button></div>
+  <form class="body pad" id="f" novalidate>
+    <h1 class="h1 login-title">다시 만나서 반가워요</h1>
+
+    <div class="notice warn gap-b" id="unverified" hidden>
+      <b>이메일 인증이 필요해요</b>
+      <div class="s"><span id="uvMail"></span> 메일함의 인증 링크를 눌러 주세요.</div>
+      <button type="button" class="btn sm line" id="resend">인증 메일 다시 보내기</button>
+    </div>
+
+    <div class="field"><label for="email">이메일</label>
+      <div class="control"><input id="email" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com"></div></div>
+    <div class="field"><label for="pw">비밀번호</label>
+      <div class="control" id="cPw"><input id="pw" type="password" autocomplete="current-password" placeholder="비밀번호"><button type="button" class="aside" data-reveal="pw">보기</button></div>
+      <div class="hint bad" id="err" role="alert"></div></div>
+
+    <button class="btn submit" type="submit">로그인</button>
+    <p class="switch-auth">아직 계정이 없나요? <a class="text-link brand-link" id="toSignup" href="terms.html">회원가입</a></p>
+  </form>
+</div></div>
+<script src="../js/core.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/pages/auth.js"></script>
+<script src="../js/pages/login.js"></script>
+</body>
+</html>

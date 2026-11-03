@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>리뷰 검토 · Pin it!</title>
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/pages/admin.css">
+</head>
+<body>
+<div class="phone"><div class="scr">
+  <div class="top line"><button class="icon-btn" data-back="me.html" aria-label="뒤로"><i data-i="back"></i></button><span class="ttl">리뷰 검토</span></div>
+  <div class="seg" id="tabs" hidden>
+    <button class="on" data-q="ai">AI 의심<span class="n num"></span></button>
+    <button data-q="report">신고 누적<span class="n num"></span></button>
+    <button data-q="pending">미판정<span class="n num"></span></button>
+  </div>
+  <div class="body" id="list" hidden></div>
+  <div class="empty" id="denied" hidden><span class="ic"><i data-i="shield"></i></span><div class="t">접근 권한이 없어요</div><div class="s">운영자 계정만 볼 수 있는 화면이에요.</div><a class="btn fit" href="home.html">지도 홈으로 가기</a></div>
+</div></div>
+<script src="../js/core.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/pages/admin.js"></script>
+</body>
+</html>

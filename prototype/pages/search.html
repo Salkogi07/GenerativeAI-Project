@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>검색 · Pin it!</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/pages/search.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+</head>
+<body>
+<div class="phone"><div class="scr" data-nav="검색">
+  <form class="top search-top" id="f" role="search">
+    <button type="button" class="icon-btn" data-back="home.html" aria-label="뒤로"><i data-i="back"></i></button>
+    <div class="control search-box">
+      <i data-i="search" class="sm muted"></i>
+      <input id="q" type="search" enterkeyhint="search" placeholder="장소, 키워드, 리스트 검색" autocomplete="off" maxlength="50">
+      <button type="button" class="aside" id="clear" aria-label="지우기" hidden><i data-i="close" class="sm"></i></button>
+    </div>
+  </form>
+
+  <div class="body" id="typing">
+    <div id="recentBox"><div class="sec-h">최근 검색<button id="clearAll">전체 삭제</button></div><div id="recent"></div></div>
+    <div id="sugBox" hidden><div class="sec-h">추천</div><div id="sug"></div></div>
+    <div class="empty" id="hello" hidden><span class="ic"><i data-i="search"></i></span><div class="t">무엇을 찾고 있나요?</div><div class="s">"성수 카페", "산책"처럼 검색해 보세요.</div></div>
+  </div>
+
+  <div class="seg" id="tabs" hidden><button class="on" data-tab="pin">핀<span class="n num" id="nPin"></span></button><button data-tab="list">리스트<span class="n num" id="nList"></span></button></div>
+  <div class="body" id="results" hidden>
+    <div class="notice warn inset" id="apiFail" hidden><b>새 장소 검색이 잠시 안 돼요</b><div class="s">잠시 후 다시 시도해 주세요. 저장된 핀만 보여 드려요.</div></div>
+    <div id="pinTab"><div class="map h200" id="map"></div><div id="pinList"></div></div>
+    <div id="listTab" hidden><div id="listList"></div><p class="footnote">공개 리스트만 검색돼요.</p></div>
+    <div class="empty" id="empty" hidden>
+      <span class="ic"><i data-i="pin"></i></span><div class="t" id="emptyT"></div><div class="s">이 장소의 첫 핀을 남기거나<br>검색 범위를 넓혀 보세요.</div>
+      <div class="actions"><button class="btn" id="firstPin">첫 핀 남기기</button><button class="btn sec" id="widen">범위 넓히기</button></div>
+    </div>
+  </div>
+</div></div>
+<script src="../js/core.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/map.js"></script>
+<script src="../js/pages/search.js"></script>
+</body>
+</html>
