@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>내 정보 · Pin it!</title>
+<title>마이페이지 · Pin it!</title>
 <link rel="stylesheet" href="../css/common.css">
 <link rel="stylesheet" href="../css/pages/me.css">
 </head>
 <body>
-<div class="phone"><div class="scr" data-nav="내 정보">
+<div class="phone"><div class="scr" data-nav="마이페이지">
   <div class="top"><span class="brand">Pin it!</span></div>
   <div class="body" id="guest" hidden>
     <div class="empty"><span class="ic"><i data-i="user"></i></span><div class="t">로그인이 필요해요</div><div class="s">로그인하면 핀을 남기고<br>리스트를 만들 수 있어요.</div>
       <a class="btn fit" href="login.html?next=me.html">로그인</a><a class="text-link" href="terms.html">회원가입</a></div>
   </div>
   <div class="body" id="member" hidden>
-    <div class="big-title">내 정보</div>
+    <div class="big-title">마이페이지</div>
     <div class="profile">
       <span class="avatar lg" id="av"></span>
       <div class="fl">
@@ -26,9 +26,9 @@
       <button class="btn sm sec" id="editNick">수정</button>
     </div>
     <div class="stats">
-      <a href="home.html?mine=1"><b class="num" id="sPins"></b><span>찍은 핀</span></a>
-      <div><b class="num" id="sReviews"></b><span>쓴 리뷰</span></div>
-      <a href="lists.html"><b class="num" id="sLists"></b><span>리스트</span></a>
+      <a href="mine.html?tab=pin"><b class="num" id="sPins"></b><span>찍은 핀<i data-i="chev" class="xs"></i></span></a>
+      <a href="mine.html?tab=review"><b class="num" id="sReviews"></b><span>쓴 리뷰<i data-i="chev" class="xs"></i></span></a>
+      <a href="lists.html"><b class="num" id="sLists"></b><span>찜 리스트<i data-i="chev" class="xs"></i></span></a>
     </div>
     <div class="notice info inset" id="limit" hidden><b>새로 가입한 계정은 리뷰를 하루 3개까지 쓸 수 있어요</b><div class="s" id="limitS"></div></div>
 

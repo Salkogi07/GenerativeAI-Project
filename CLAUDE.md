@@ -32,6 +32,8 @@ Product rules that every screen and table must follow:
 
 A clickable HTML/CSS/JS prototype that looks like the real service. Open `docs/prototype/pages/index.html` in a browser; there is no build step.
 
+- **Bottom tabs (user's request):** exactly 4, 홈·피드·찜 리스트·마이페이지 (`TABS` in `js/ui.js`). Search has no tab; it opens from the home search pill and is `data-nav="홈"`. If a tab is ever dropped to 3, consider adding one back. Pin detail (`pin.html`) and pin creation (`pin-new.html`) also show the tab bar under their `.cta` (user's request), with `data-nav="홈"`; tapping a tab while a `[data-guard]` form is dirty asks before leaving. The account tab is called 마이페이지, not 내 정보.
+- **Region picker:** UI only, a full page (`region.html`, opened from home top-right; `REGIONS` in `js/data.js`). It is a page with the search box at the top, not a bottom sheet, so the mobile keyboard never covers the input or results (user's request). Keep text inputs at 16px+ so iOS does not zoom. Demo data exists only for 성수동; other regions just move the map until real data/API is connected.
 - **No start screen (user's request).** `index.html` signs in as `demo@pinit.kr` when there is no session and goes straight to the `home.html` map, so 핀 찍기 never shows a login screen. Logout and account deletion go to `login.html` instead (going to `index.html` would sign in again).
 
 - **Data:** everything is demo data in the browser's localStorage, under keys prefixed `pinit.`. Seed data lives in `js/data.js`.

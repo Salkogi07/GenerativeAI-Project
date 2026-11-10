@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>내 활동 · Pin it!</title>
+<link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+<div class="phone"><div class="scr">
+  <div class="top line"><button class="icon-btn" data-back="me.html" aria-label="뒤로"><i data-i="back"></i></button><span class="ttl">내 활동</span></div>
+  <div class="seg" id="tabs"><button data-tab="pin">내가 찍은 핀<span class="n num" id="nPin"></span></button><button data-tab="review">내가 쓴 리뷰<span class="n num" id="nRv"></span></button></div>
+  <div class="body">
+    <div id="pins"></div>
+    <div id="rvs" hidden></div>
+    <div class="empty" id="emptyPin" hidden><span class="ic"><i data-i="pin"></i></span><div class="t">아직 찍은 핀이 없어요</div><div class="s">가게가 아닌 곳도 핀으로 남길 수 있어요.</div><a class="btn fit" href="pin-new.html">핀 찍기</a></div>
+    <div class="empty" id="emptyRv" hidden><span class="ic"><i data-i="edit"></i></span><div class="t">아직 쓴 리뷰가 없어요</div><div class="s">다녀온 장소에 첫 리뷰를 남겨 보세요.</div><a class="btn fit" href="feed.html">피드 둘러보기</a></div>
+  </div>
+</div></div>
+<script src="../js/core.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/pages/mine.js"></script>
+</body>
+</html>

@@ -15,6 +15,7 @@ body{font-family:'NanumBarunGothic',Pretendard,"Malgun Gothic",system-ui,sans-se
 a{color:inherit;text-decoration:none}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 input,textarea{font:inherit;color:var(--text)}
+input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;display:none} /* 지우기는 직접 만든 #clear 버튼만 */
 ul{padding-left:18px}
 [hidden]{display:none!important}
 .i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
@@ -150,6 +151,7 @@ ul{padding-left:18px}
 .thumb{width:52px;height:52px;border-radius:10px;flex:none;background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--mute);overflow:hidden}
 .thumb.tint{background:var(--brand-weak);color:var(--brand)}
 .thumb.md{width:44px;height:44px}
+.thumb img{width:100%;height:100%;object-fit:cover}
 .notice{border-radius:var(--r);background:var(--surface);padding:14px 16px;font-size:14px}
 .notice b{display:block;margin-bottom:2px}
 .notice .s{font-size:13px;color:var(--sub)}
@@ -202,6 +204,17 @@ ul{padding-left:18px}
 .rv.held{color:var(--mute);font-size:14px;display:flex;align-items:center;gap:8px}
 .photos{display:flex;gap:6px;margin-top:12px}
 .photos.flush{margin-top:0}
+.own-check{min-height:44px;margin-top:6px;font-size:14px}
+.sort-chips{padding:12px 20px 4px;flex:none}
+.frv{display:block;padding:16px 20px;border-bottom:1px solid var(--line)}
+.frv:active{background:var(--surface)}
+.frv-place{display:flex;align-items:center;gap:4px;font-weight:700;font-size:15.5px}
+.frv-place .i{color:var(--brand)}
+.frv-who{display:block;font-size:12.5px;color:var(--mute);margin:2px 0 10px}
+.frv .ad-label{display:flex;width:max-content}
+.frv-body{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:15px;line-height:1.55}
+.frv .photos{margin-top:10px}
+.frv .photo{width:64px;height:64px}
 .photo{width:84px;height:84px;border-radius:10px;flex:none;overflow:hidden;position:relative;background:var(--surface)}
 .photo img{width:100%;height:100%;object-fit:cover}
 .ph-1{background:linear-gradient(140deg,#e7d3bb,#a27a55 70%,#6f4e33)}

@@ -16,6 +16,8 @@ $('#meta').innerHTML = `<span>${esc(nickOf(pin.author))} 님의 핀</span>`
   + (place ? `<span>·</span><a class="text-link" target="_blank" rel="noopener" href="https://map.kakao.com/?q=${encodeURIComponent(place.name)}">카카오맵에서 보기</a>` : '');
 $('#desc').textContent = pin.desc || (isMine ? '아직 설명이 없어요. 이 장소를 어떻게 쓰면 좋은지 적어 보세요.' : '아직 설명이 없어요.');
 $('#desc').classList.toggle('is-empty', !pin.desc);
+$('#pinPhotos').innerHTML = (pin.photos || []).map(p => photoHTML(p, `${pin.name} 사진`)).join('');
+$('#pinPhotos').hidden = !pin.photos?.length;
 $('#edit').hidden = !isMine;
 $('#edit').href = `pin-edit.html?id=${pin.id}`;
 
@@ -41,6 +43,8 @@ function renderLike() {
 }
 renderReviews();
 renderLike();
+// 피드·내 활동에서 #reviews-h(리뷰 목록)나 #rv-…(특정 리뷰)로 들어오면 그 위치로
+if (location.hash) $(location.hash)?.scrollIntoView({ block: 'start' });
 
 $('#share').onclick = async () => {
   const url = `${location.href.split('?')[0]}?id=${pin.id}`; // file:// 에서는 location.origin 이 "null"

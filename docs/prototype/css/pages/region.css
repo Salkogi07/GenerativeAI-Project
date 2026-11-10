@@ -1,0 +1,8 @@
+.search-top{padding-right:16px}
+.search-box{flex:1;min-height:44px;border-radius:22px}
+.search-box input{height:42px;font-size:16px}
+.region-note{flex:none;padding:10px 20px;font-size:13px;color:var(--sub);background:var(--surface)}
+.region-list .check{padding:0 20px;min-height:56px;border-bottom:1px solid var(--line)}
+.region-list .check:active{background:var(--surface)}
+.region-list .now{font-size:12.5px;font-weight:600;color:var(--brand)}
+.region-empty{padding:24px 20px;font-size:14px;color:var(--sub)}

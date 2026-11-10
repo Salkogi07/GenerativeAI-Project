@@ -1,8 +1,7 @@
 // 지도 홈: 공개 핀 지도, 카테고리 칩, 핀 미리보기 카드, 내 위치, 핀 찍기.
-const mine = qs.get('mine');
-if (mine && !needLogin()) throw new Error('login required');
 const u = me();
-const m = makeMap($('#map'));
+const region = REGIONS.find(r => r[0] === DB.get('region', '')) || REGIONS[0];
+const m = makeMap($('#map'), { center: [region[1], region[2]] });
 let cat = '', markers = [], selected = null;
 
 $('#chips').innerHTML = ['전체', ...CATS.slice(0, 4)].map(c =>
@@ -19,6 +18,8 @@ function show(p, mk) {
   selected?.setIcon(markerIcon(selected.pin));
   mk.setIcon(markerIcon(p, 'sel'));
   selected = mk;
+  const ph = placePhotos(p);
+  $('#pvThumb').innerHTML = ph.length ? photoHTML(ph[0], `${p.name} 사진`, 'pv-ph') : icon('pin');
   $('#pvName').textContent = p.name;
   $('#pvSub').textContent = `${pinKind(p)} · 리뷰 ${visibleCount(p.id)} · 찜 ${likeCount(p.id)}`;
   $('#pvDesc').textContent = p.desc || '아직 설명이 없어요.';
@@ -41,13 +42,11 @@ function hide() {
 function draw() {
   hide();
   markers.forEach(x => x.remove());
-  const list = pins().filter(p => (!cat || p.cat === cat) && (!mine || p.author === u?.email));
+  const list = pins().filter(p => !cat || p.cat === cat);
   markers = addPins(m, list, show);
-  if (mine) fitTo(m, list);
-  if (!list.length) toast(mine ? '아직 찍은 핀이 없어요' : '이 카테고리에는 아직 핀이 없어요', { label: '핀 찍기', href: 'pin-new.html' });
+  if (!list.length) toast('이 카테고리에는 아직 핀이 없어요', { label: '핀 찍기', href: 'pin-new.html' });
 }
 m?.on('click', hide);
-$('#mineBar').hidden = !mine;
 
 $('#fab').onclick = e => {
   e.preventDefault();
@@ -58,11 +57,12 @@ $('#fab').onclick = e => {
 // 위치는 지도 이동에만 쓰고 저장하지 않음
 $('#loc').onclick = () => {
   const fallback = msg => { m?.setView(CENTER, 15); toast(msg); };
-  if (u && u.location === false) return fallback('위치 정보 이용이 꺼져 있어요. 내 정보에서 켤 수 있어요');
+  if (u && u.location === false) return fallback('위치 정보 이용이 꺼져 있어요. 마이페이지에서 켤 수 있어요');
   if (!navigator.geolocation) return fallback('이 기기에서는 위치를 확인할 수 없어요');
   navigator.geolocation.getCurrentPosition(p => {
     const pos = { lat: p.coords.latitude, lng: p.coords.longitude };
     dist(pos, { lat: CENTER[0], lng: CENTER[1] }) > 5000 ? fallback('지금은 성수동만 볼 수 있어서 성수동으로 이동했어요') : m?.setView([pos.lat, pos.lng], 16);
   }, () => fallback('위치 권한이 없어 성수동 중심으로 이동했어요'), { timeout: 6000 });
 };
+$('#regionName').textContent = region[0];
 draw();

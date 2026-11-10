@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<title>지역 선택 · Pin it!</title>
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/pages/region.css">
+</head>
+<body>
+<div class="phone"><div class="scr">
+  <form class="top line search-top" id="f" role="search">
+    <button type="button" class="icon-btn" data-back="home.html" aria-label="뒤로"><i data-i="back"></i></button>
+    <div class="control search-box">
+      <i data-i="search" class="sm muted"></i>
+      <input id="q" type="search" enterkeyhint="search" placeholder="동네 이름 검색 (예: 연남동)" maxlength="20" autocomplete="off" aria-label="지역 검색">
+      <button type="button" class="aside" id="clear" aria-label="지우기" hidden><i data-i="close" class="sm"></i></button>
+    </div>
+  </form>
+  <p class="region-note">지금은 성수동에만 시연 데이터가 있어요. 다른 지역은 지도만 옮겨요.</p>
+  <div class="body" id="scroll">
+    <div class="region-list" id="list" role="radiogroup" aria-label="지역"></div>
+    <p class="region-empty" id="none" hidden>찾는 지역이 없어요. 동네 이름으로 다시 검색해 보세요.</p>
+  </div>
+</div></div>
+<script src="../js/core.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/pages/region.js"></script>
+</body>
+</html>

@@ -17,6 +17,7 @@ const ICONS = {
   edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/>', flag: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
   mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>', map: '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>', shield: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/>',
+  feed: '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>',
   trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
   eyeoff: '<path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7c1.7 0 3.2-.5 4.5-1.2"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
 };
@@ -87,12 +88,44 @@ const DOCS = {
 };
 const openDoc = key => { const [t, b] = DOCS[key]; sheet(`<h3>${esc(t)}</h3><p class="doc">${esc(b)}</p><button class="btn" data-close>확인</button>`); };
 
+// ---------- photos: 저장된 사진(시연용 무늬 클래스 또는 data URL), 첨부 검사·축소 ----------
+const photoHTML = (p, alt = '사진', cls = 'photo') => p.startsWith('data:')
+  ? `<div class="${cls}"><img src="${p}" alt="${alt}"></div>` : `<div class="${cls} ${p}" role="img" aria-label="${alt}"></div>`;
+const photoTiles = photos => photos.map((p, i) => `<div class="photo"><img src="${p}" alt="첨부 사진 ${i + 1}"><button class="x" data-rm="${i}" aria-label="사진 ${i + 1} 삭제">${icon('close')}</button></div>`).join('')
+  + (photos.length < 3 ? `<button class="photo-add" data-add>${icon('camera')}<span class="num">${photos.length}/3</span></button>` : '');
+// 최대 3장 · JPG·PNG·WebP · 장당 5MB. 오류 문구를 돌려줘요.
+async function addPhotos(files, photos) {
+  let err = '';
+  for (const f of files) {
+    if (photos.length >= 3) { err = '사진은 최대 3장까지 올릴 수 있어요.'; break; }
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) { err = 'JPG·PNG·WebP 사진만 올릴 수 있어요.'; continue; }
+    if (f.size > 5 * 1024 * 1024) { err = `"${f.name}"은 5MB를 넘어요.`; continue; }
+    photos.push(await shrink(f, 480)); // shortcut: 시연용 480px 저장 (실서비스: 긴 변 1280px → Supabase Storage)
+  }
+  return err;
+}
+// 캔버스로 다시 그려 EXIF(위치 정보)가 빠져요
+function shrink(file, max) {
+  return new Promise((res, rej) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const s = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * s);
+      c.height = Math.round(img.height * s);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg', 0.8));
+    };
+    img.onerror = rej;
+    img.src = url;
+  });
+}
+
 // ---------- review card ----------
 function reviewHTML(r, viewer) {
   if (r.hidden) return `<div class="rv held">${icon('eyeoff', 'sm')}신고가 접수돼 검토 중인 리뷰예요.</div>`;
   const nick = nickOf(r.by, r.nick);
-  const photos = (r.photos || []).map(p => p.startsWith('data:')
-    ? `<div class="photo"><img src="${p}" alt="리뷰 사진"></div>` : `<div class="photo ${p}"></div>`).join('');
+  const photos = (r.photos || []).map(p => photoHTML(p, '리뷰 사진')).join('');
   return `<div class="rv" id="rv-${r.id}">
     <div class="who"><span class="avatar">${esc(nick[0].toUpperCase())}</span><span class="nm">${esc(nick)}</span>
       <span class="dt">${fmtDate(r.at)}${viewer?.email === r.by ? ' · 내 리뷰' : ''}</span>
@@ -101,8 +134,19 @@ function reviewHTML(r, viewer) {
     <p>${esc(r.body)}</p>${photos ? `<div class="photos">${photos}</div>` : ''}</div>`;
 }
 
+// 피드·내 활동의 리뷰 카드: 누르면 핀 상세의 그 리뷰로
+function reviewLinkHTML(r) {
+  const p = pinById(r.pin);
+  if (!p) return '';
+  return `<a class="frv" href="pin.html?id=${p.id}#rv-${r.id}">
+    <span class="frv-place">${icon('pin', 'sm')}<span class="ell">${esc(p.name)}</span></span>
+    <span class="frv-who">${esc(nickOf(r.by, r.nick))} · ${ago(r.at)} · ${esc(pinKind(p))}</span>
+    ${r.ad || r.adminLabel ? '<span class="ad-label">협찬·광고</span>' : ''}<span class="frv-body">${esc(r.body)}</span>
+    ${r.photos?.length ? `<span class="photos">${r.photos.map(x => photoHTML(x, '리뷰 사진')).join('')}</span>` : ''}</a>`;
+}
+
 // ---------- chrome: tab bar, icons, ?toast= ----------
-const TABS = [['홈', 'home.html', 'home'], ['리스트', 'lists.html', 'bookmark'], ['검색', 'search.html', 'search'], ['내 정보', 'me.html', 'user']];
+const TABS = [['홈', 'home.html', 'home'], ['피드', 'feed.html', 'feed'], ['찜 리스트', 'lists.html', 'bookmark'], ['마이페이지', 'me.html', 'user']];
 (function chrome() {
   const scr = $('.scr');
   const on = scr.dataset.nav;
@@ -124,6 +168,12 @@ document.addEventListener('click', async e => {
   e.preventDefault();
   if (document.body.dataset.dirty && !(await dialog({ title: '작성을 그만할까요?', body: '입력한 내용은 저장되지 않아요.', ok: '그만하기', danger: true }))) return;
   history.length > 1 && document.referrer ? history.back() : go(b.dataset.back || 'home.html');
+});
+document.addEventListener('click', async e => {
+  const a = e.target.closest('.tabbar a');
+  if (!a || !document.body.dataset.dirty) return;
+  e.preventDefault();
+  if (await dialog({ title: '작성을 그만할까요?', body: '입력한 내용은 저장되지 않아요.', ok: '그만하기', danger: true })) { clean(); go(a.href); }
 });
 document.addEventListener('input', e => { if (e.target.closest('[data-guard]')) document.body.dataset.dirty = '1'; });
 const clean = () => { delete document.body.dataset.dirty; };

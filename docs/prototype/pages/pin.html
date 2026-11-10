@@ -10,8 +10,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 </head>
 <body>
-<div class="phone"><div class="scr">
-  <div class="top"><button class="icon-btn" data-back="home.html" aria-label="뒤로"><i data-i="back"></i></button><span class="ttl"></span><button class="icon-btn" id="share" aria-label="공유"><i data-i="share"></i></button></div>
+<div class="phone"><div class="scr" data-nav="홈">
+  <div class="top"><button class="icon-btn" data-back="home.html" aria-label="뒤로"><i data-i="back"></i></button><span class="ttl"></span><a class="icon-btn" href="home.html" aria-label="지도 홈으로"><i data-i="home"></i></a><button class="icon-btn" id="share" aria-label="공유"><i data-i="share"></i></button></div>
   <div class="body" id="page">
     <div class="map h150" id="map"></div>
     <div class="pad pin-info">
@@ -19,10 +19,11 @@
       <h1 class="pin-name" id="name"></h1>
       <div class="pin-meta" id="meta"></div>
       <p class="pin-desc" id="desc"></p>
+      <div class="photos" id="pinPhotos" hidden></div>
       <a class="btn sm line pin-edit" id="edit" hidden><i data-i="edit" class="sm"></i>설명 수정</a>
     </div>
     <div class="divider"></div>
-    <div class="sec-h reviews-h"><span>리뷰 <span class="num" id="rvCount"></span></span><span class="order">최신순</span></div>
+    <div class="sec-h reviews-h" id="reviews-h"><span>리뷰 <span class="num" id="rvCount"></span></span><span class="order">최신순</span></div>
     <div id="reviews"></div>
   </div>
   <div class="empty" id="gone" hidden><span class="ic"><i data-i="pin"></i></span><div class="t">찾을 수 없는 핀이에요</div><div class="s">숨겨졌거나 삭제된 핀이에요.</div><a class="btn fit" href="home.html">지도 홈으로 가기</a></div>

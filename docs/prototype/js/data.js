@@ -1,6 +1,9 @@
 // 시연용 가상 데이터 · 성수동 — seed data, accessors and session. Depends on core.js.
 const CENTER = [37.5436, 127.0518];
 const CATS = ['카페', '맛집', '전시', '산책', '기타'];
+// 지역 선택 목록 [이름, 위도, 경도]. 시연 데이터는 첫 번째(성수동)에만 있어요.
+const REGIONS = [['성수동', ...CENTER], ['연남동', 37.5662, 126.9235], ['망원동', 37.5560, 126.9030], ['합정동', 37.5495, 126.9137],
+  ['을지로', 37.5663, 126.9910], ['익선동', 37.5742, 126.9893], ['서촌', 37.5797, 126.9706], ['한남동', 37.5345, 127.0020]];
 const T0 = Date.now();
 
 const SEED = {
@@ -11,10 +14,10 @@ const SEED = {
     { email: 'jaemin@pinit.kr', pw: 'pinit1234', nick: 'jaemin', verified: true, created: T0 - 30 * DAY },
   ],
   pins: [
-    { id: 'p1', name: '카페 하루결', cat: '카페', kind: '장소', placeId: 'k1', lat: 37.5448, lng: 127.0560, desc: '2층 창가 자리가 조용해요. 주말 오후엔 웨이팅이 있어요.', author: 'jaemin@pinit.kr', created: T0 - 20 * DAY },
-    { id: 'p2', name: '성수 브루랩', cat: '카페', kind: '장소', placeId: 'k2', lat: 37.5431, lng: 127.0531, desc: '콘센트 자리가 많아서 노트북 작업하기 좋아요.', author: 'demo@pinit.kr', created: T0 - 2 * DAY },
-    { id: 'p3', name: '노을 보는 벤치', cat: '산책', kind: '위치', lat: 37.5412, lng: 127.0433, desc: '해 질 무렵 서울숲 쪽으로 노을이 잘 보이는 벤치예요.', author: 'demo@pinit.kr', created: T0 - 1 * DAY },
-    { id: 'p4', name: '갤러리 모노', cat: '전시', kind: '장소', placeId: 'k4', lat: 37.5469, lng: 127.0592, desc: '무료 전시가 한 달마다 바뀌어요.', author: 'minji@pinit.kr', created: T0 - 15 * DAY },
+    { id: 'p1', name: '카페 하루결', cat: '카페', kind: '장소', placeId: 'k1', lat: 37.5448, lng: 127.0560, desc: '2층 창가 자리가 조용해요. 주말 오후엔 웨이팅이 있어요.', photos: ['ph-3', 'ph-1'], author: 'jaemin@pinit.kr', created: T0 - 20 * DAY },
+    { id: 'p2', name: '성수 브루랩', cat: '카페', kind: '장소', placeId: 'k2', lat: 37.5431, lng: 127.0531, desc: '콘센트 자리가 많아서 노트북 작업하기 좋아요.', photos: ['ph-2'], author: 'demo@pinit.kr', created: T0 - 2 * DAY },
+    { id: 'p3', name: '노을 보는 벤치', cat: '산책', kind: '위치', lat: 37.5412, lng: 127.0433, desc: '해 질 무렵 서울숲 쪽으로 노을이 잘 보이는 벤치예요.', photos: ['ph-2'], author: 'demo@pinit.kr', created: T0 - 1 * DAY },
+    { id: 'p4', name: '갤러리 모노', cat: '전시', kind: '장소', placeId: 'k4', lat: 37.5469, lng: 127.0592, desc: '무료 전시가 한 달마다 바뀌어요.', photos: ['ph-1'], author: 'minji@pinit.kr', created: T0 - 15 * DAY },
     { id: 'p5', name: '성수 국밥집', cat: '맛집', kind: '장소', placeId: 'k5', lat: 37.5421, lng: 127.0577, desc: '아침 7시부터 열어요. 국물이 진해요.', author: 'jaemin@pinit.kr', created: T0 - 12 * DAY },
     { id: 'p6', name: '뚝섬 강변 산책길', cat: '산책', kind: '위치', lat: 37.5396, lng: 127.0472, desc: '자전거 길 옆으로 걷기 좋은 구간이에요.', author: 'minji@pinit.kr', created: T0 - 9 * DAY },
   ],
@@ -70,6 +73,8 @@ const todayCount = u => reviews().filter(r => r.by === u.email && new Date(r.at)
 const pinReviews = id => reviews().filter(r => r.pin === id).sort((a, b) => b.at - a.at);
 const visibleCount = id => pinReviews(id).filter(r => !r.hidden).length;
 const likeCount = id => lists().filter(l => l.pins.includes(id)).length;
+// 장소 사진 = 핀 사진 + 그 핀에 보이는 리뷰 사진
+const placePhotos = p => [...(p.photos || []), ...pinReviews(p.id).filter(r => !r.hidden).flatMap(r => r.photos || [])];
 const pinKind = p => p.kind === '위치' ? '위치 핀' : p.cat;
 
 // 비로그인 → 로그인 화면, 로그인 뒤 원래 화면으로 복귀 (PRD 4-4)

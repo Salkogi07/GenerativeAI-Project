@@ -44,6 +44,24 @@ $('#near').onclick = async e => {
 };
 renderNear();
 
+const photos = [];
+function renderPhotos() {
+  $('#photos').innerHTML = photoTiles(photos);
+  $('#ownWrap').hidden = !photos.length;
+}
+$('#photos').onclick = e => {
+  const rm = e.target.closest('[data-rm]');
+  if (rm) { photos.splice(+rm.dataset.rm, 1); renderPhotos(); return; }
+  if (e.target.closest('[data-add]')) $('#file').click();
+};
+$('#file').onchange = async () => {
+  $('#photoErr').textContent = await addPhotos([...$('#file').files], photos);
+  $('#file').value = '';
+  document.body.dataset.dirty = '1';
+  renderPhotos();
+};
+renderPhotos();
+
 $('#name').addEventListener('input', () => {
   $('#nameCount').textContent = `${$('#name').value.length}/30`;
   $('#nameErr').textContent = '';
@@ -54,6 +72,7 @@ $('#save').onclick = async () => {
   const name = $('#name').value.trim();
   if (!name) { $('#nameErr').textContent = '핀 이름을 적어 주세요.'; $('#cName').classList.add('bad'); $('#name').focus(); return; }
   if (!cat) return toast('카테고리를 골라 주세요');
+  if (photos.length && !$('#own').checked) return toast('직접 찍은 사진인지 확인해 주세요');
   const all = pins();
   if (!link) { // 반경 30m 안 핀이 있으면 기존 핀 제안
     const close = all.find(p => dist(pos, p) <= 30);
@@ -62,7 +81,7 @@ $('#save').onclick = async () => {
     }
   }
   const p = { id: 'p' + uid(), name, cat, kind: link ? '장소' : '위치', placeId: link || undefined,
-    lat: +pos.lat.toFixed(6), lng: +pos.lng.toFixed(6), desc: '', author: u.email, created: Date.now() };
+    lat: +pos.lat.toFixed(6), lng: +pos.lng.toFixed(6), desc: '', photos: [...photos], author: u.email, created: Date.now() };
   all.push(p);
   save('pins', all);
   clean();
