@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-**Pin it!** is a mobile web prototype for finding and sharing location pins and wishlists, with reviews that show whether they are ads. The repo has planning documents (`docs/`) and a browser-only HTML prototype (`prototype/`). The real React/Supabase app is not built yet. The root `index.html` only redirects (meta refresh) to `prototype/pages/index.html`.
+**Pin it!** is a mobile web prototype for finding and sharing location pins and wishlists, with reviews that show whether they are ads. The repo has planning documents (`docs/`) and a browser-only HTML prototype (`docs/prototype/`). The real React/Supabase app is not built yet. The root `index.html` only redirects (meta refresh) to the prototype start page, and GitHub Pages serves it at https://salkogi07.github.io/GenerativeAI-Project/.
 
-The source of truth is [docs/prd/Pin it! PRD v1.0 (확정본).pdf](docs/prd/). Read it before you design or build anything. When the 기획서 (proposal) and the 실습 (lab) disagree, the PRD follows 실습 2·3.
+The source of truth is [docs/prd/Pin it! PRD v0.1 (확정본).pdf](docs/prd/). Read it before you design or build anything. When the 기획서 (proposal) and the 실습 (lab) disagree, the PRD follows 실습 2·3.
 
 ## Planned stack (from the PRD, not built yet)
 
@@ -28,9 +28,9 @@ Product rules that every screen and table must follow:
   - Up to 3 photos, 5 MB each.
   - Suggest merging when another pin is within 30 m.
 
-## Prototype (`prototype/`)
+## Prototype (`docs/prototype/`)
 
-A clickable HTML/CSS/JS prototype that looks like the real service. Open `prototype/pages/index.html` (the start screen) in a browser; there is no build step.
+A clickable HTML/CSS/JS prototype that looks like the real service. Open `docs/prototype/pages/index.html` (the start screen) in a browser; there is no build step.
 
 - **Data:** everything is demo data in the browser's localStorage, under keys prefixed `pinit.`. Seed data lives in `js/data.js`.
   - Demo accounts: `demo@pinit.kr` / `pinit1234` (a new account, so the review limit applies) and `admin@pinit.kr` / `pinit1234` (admin).
@@ -40,7 +40,7 @@ A clickable HTML/CSS/JS prototype that looks like the real service. Open `protot
   - AI verdicts are the fixed `AI_EXAMPLES`. They appear only on `admin.html`, and must always carry the "예시 데이터" badge.
 - **Map:** Leaflet 1.9.4 from cdnjs, with **no tile layer for now**. The user asked not to load real maps yet, so the map shows a grid background (`.leaflet-container` in `common.css`) with pins only.
   - **When tiles are added:** add `L.tileLayer` in `makeMap` (`js/map.js`).
-  - OSM standard tiles work only over `http://` (for example `cd prototype && python -m http.server`, then open http://localhost:8000/pages/). Opened as `file://` they return an "Access blocked" tile because there is no Referer.
+  - OSM standard tiles work only over `http://` (for example `cd docs/prototype && python -m http.server`, then open http://localhost:8000/pages/). Opened as `file://` they return an "Access blocked" tile because there is no Referer.
   - CARTO returns an "API key required" tile. OpenTopoMap works without a Referer.
 - **Leaflet link color:** Leaflet sets `.leaflet-container a{color:#0078A8}`, which overrides the color of any `<a>` placed over a map. Style those links with `.map .<class>`, as `common.css` does for `.fab-main` and `.preview`.
 - **User-facing only:** pages contain no screen IDs, design notes or wireframe markers.
@@ -49,7 +49,7 @@ A clickable HTML/CSS/JS prototype that looks like the real service. Open `protot
 
 | What | Where |
 |---|---|
-| Page markup | `prototype/pages/<page>.html`. Every HTML file lives here; pages link to each other by bare file name and load assets via `../css/`, `../js/`. |
+| Page markup | `docs/prototype/pages/<page>.html`. Every HTML file lives here; pages link to each other by bare file name and load assets via `../css/`, `../js/`. |
 | Shared styles | `css/common.css` |
 | One page's styles | `css/pages/<page>.css` |
 | Shared scripts | `js/core.js` (DOM, storage, dates) → `js/data.js` (seed data, session, `needLogin`) → `js/ui.js` (icons, tab bar, toast, dialog, sheet, review card) → `js/map.js` (Leaflet helpers). Load them in this order. |
@@ -60,7 +60,7 @@ A clickable HTML/CSS/JS prototype that looks like the real service. Open `protot
   - The one exception is a data-driven value. Set it with `el.style.<prop>` after rendering, as `admin.js` does for the confidence bar width.
 - **Check after edits** (prints any violations and missing local files):
   ```sh
-  cd prototype/pages && python -I -c "import re,glob,os;b=[(f,'inline') for f in glob.glob('*.html') if re.search(r'<script(?![^>]*\bsrc=)[^>]*>|<style|\sstyle=',open(f,encoding='utf-8').read())]+[(f,'style=') for f in glob.glob('../js/**/*.js',recursive=True) if re.search(r'\sstyle=',open(f,encoding='utf-8').read())]+[(f,h) for f in glob.glob('*.html') for h in re.findall(r'(?:href|src)=\"([^\"#?]+)',open(f,encoding='utf-8').read()) if not h.startswith('http') and not os.path.exists(h)];print(b)"
+  cd docs/prototype/pages && python -I -c "import re,glob,os;b=[(f,'inline') for f in glob.glob('*.html') if re.search(r'<script(?![^>]*\bsrc=)[^>]*>|<style|\sstyle=',open(f,encoding='utf-8').read())]+[(f,'style=') for f in glob.glob('../js/**/*.js',recursive=True) if re.search(r'\sstyle=',open(f,encoding='utf-8').read())]+[(f,h) for f in glob.glob('*.html') for h in re.findall(r'(?:href|src)=\"([^\"#?]+)',open(f,encoding='utf-8').read()) if not h.startswith('http') and not os.path.exists(h)];print(b)"
   ```
 - **JS error check:** run headless Chrome with `--enable-logging=stderr --v=0` and grep for `CONSOLE`.
   - Pages that need a login: open a scratch `file://` page first that sets `localStorage['pinit.session']` and then redirects. All `file://` pages share one localStorage.
@@ -71,7 +71,9 @@ A clickable HTML/CSS/JS prototype that looks like the real service. Open `protot
 
 The target device is the Galaxy S26, with a viewport of **360×780 dp**. Mobile only.
 
-### HTML wireframe (`docs/wireframe/html/`)
+Wireframes are versioned by folder. v0.2 is the current one.
+
+### v0.2 HTML wireframe (`docs/wireframe/v0.2/html/`)
 
 This is the current one. Start at `index.html`, which lists every screen.
 
@@ -85,15 +87,18 @@ This is the current one. Start at `index.html`, which lists every screen.
 - **When you add a page,** also add it to `index.html`.
 - **Link check after edits:**
   ```sh
-  cd docs/wireframe/html && python -I -c "import re,glob,os;print([(f,h) for f in ['index.html']+glob.glob('pages/*.html') for h in re.findall(r'(?:href|src)=\"([^\"#]+)\"',open(f,encoding='utf-8').read()) if not h.startswith('http') and not os.path.exists(os.path.normpath(os.path.join(os.path.dirname(f),h)))])"
+  cd docs/wireframe/v0.2/html && python -I -c "import re,glob,os;print([(f,h) for f in ['index.html']+glob.glob('pages/*.html') for h in re.findall(r'(?:href|src)=\"([^\"#]+)\"',open(f,encoding='utf-8').read()) if not h.startswith('http') and not os.path.exists(os.path.normpath(os.path.join(os.path.dirname(f),h)))])"
   ```
 
-### PDF wireframe (`docs/wireframe/PinIt_Wireframe_v1.1.pdf`)
+### v0.2 PDF wireframe (`docs/wireframe/v0.2/html/PinIt_Wireframe_v0.2.pdf`)
 
-- It is generated from `pdf-source/wireframe.html`. That one file renders every screen plus its annotations with JS.
 - It is **behind the HTML wireframe.** It is missing the start screen, terms consent, the expanded signup (nickname and password confirmation), the expanded 내 정보 screen, and the brand header.
-- Regenerate with headless Chrome (the command is in [docs/README.md](docs/README.md)).
+- Its source (`pdf-source/wireframe.html`) was deleted, so it can't be regenerated.
 - To inspect pages, use PyMuPDF (`pip install pymupdf`). `pdftoppm` is not installed.
+
+### v0.1 wireframe (`docs/wireframe/v0.1/pin it! wireframe 0.1.html`)
+
+- An older single-file wireframe with inline CSS/JS: a side menu of screens next to a Galaxy S25 frame (393×852). Keep it for history; don't edit it.
 
 ## Environment notes
 
