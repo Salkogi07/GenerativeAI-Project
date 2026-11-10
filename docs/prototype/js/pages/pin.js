@@ -13,7 +13,7 @@ const isMine = u?.email === pin.author;
 $('#tags').innerHTML = `<span class="tag">${pin.kind === '위치' ? '위치 핀' : '장소'}</span><span class="tag">${esc(pin.cat)}</span>`;
 $('#name').textContent = pin.name;
 $('#meta').innerHTML = `<span>${esc(nickOf(pin.author))} 님의 핀</span>`
-  + (place ? `<span>·</span><a class="text-link" target="_blank" rel="noopener" href="https://map.kakao.com/?q=${encodeURIComponent(place.name)}">카카오맵에서 보기</a>` : '');
+  + (place ? `<span>·</span><a class="text-link" target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat=${place.lat}&mlon=${place.lng}#map=18/${place.lat}/${place.lng}">지도에서 크게 보기</a>` : '');
 $('#desc').textContent = pin.desc || (isMine ? '아직 설명이 없어요. 이 장소를 어떻게 쓰면 좋은지 적어 보세요.' : '아직 설명이 없어요.');
 $('#desc').classList.toggle('is-empty', !pin.desc);
 $('#pinPhotos').innerHTML = (pin.photos || []).map(p => photoHTML(p, `${pin.name} 사진`)).join('');

@@ -1,4 +1,4 @@
-// 핀 찍기: 지도에서 위치 지정, 이름 직접 입력(카카오 결과로 미리 채우지 않음), 근처 장소 연결, 중복·근접 핀 확인.
+// 핀 찍기: 지도에서 위치 지정, 이름 직접 입력(장소 데이터로 미리 채우지 않음), 근처 장소 연결, 중복·근접 핀 확인.
 if (!needLogin()) throw new Error('login required');
 const u = me();
 const place = PLACES.find(p => p.id === qs.get('place'));

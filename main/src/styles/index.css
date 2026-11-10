@@ -1,0 +1,15 @@
+/* 순서가 중요해요: 공통 → 화면별 → main 전용. 화면별 CSS가 공통 CSS를 덮어써야 프로토타입과 같아져요. */
+@import './common.css';
+@import './pages/admin.css';
+@import './pages/auth.css';
+@import './pages/feed.css';
+@import './pages/home.css';
+@import './pages/list.css';
+@import './pages/me.css';
+@import './pages/pin-new.css';
+@import './pages/pin.css';
+@import './pages/region.css';
+@import './pages/review-new.css';
+@import './pages/search.css';
+@import './pages/shared.css';
+@import './app.css';

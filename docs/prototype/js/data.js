@@ -40,7 +40,7 @@ const SEED = {
   ],
 };
 
-// 카카오 로컬 검색 결과를 흉내 낸 고정 장소 (실서비스: Edge Function 실시간 호출, 장소 ID·URL만 저장)
+// 공공데이터(서울시 공원·구별 카페 현황)로 만든 장소 목록을 흉내 낸 고정 장소 (실서비스: Supabase places 테이블)
 const PLACES = [
   { id: 'k1', name: '카페 하루결', cat: '카페', lat: 37.5448, lng: 127.0560 },
   { id: 'k2', name: '성수 브루랩', cat: '카페', lat: 37.5431, lng: 127.0531 },

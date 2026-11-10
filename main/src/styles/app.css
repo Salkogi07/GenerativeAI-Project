@@ -1,0 +1,5 @@
+/* main(React)에서만 필요한 것. 나머지 디자인은 프로토타입 CSS(common.css, pages/*.css)를 그대로 써요. */
+.contents{display:contents}
+/* 실제 지도(OSM)를 띄우니 프로토타입의 격자 배경 대신 타일이 보여요. 저작권 표시는 작게. */
+.leaflet-container{background-image:none}
+.map .leaflet-control-attribution a{color:var(--sub)}

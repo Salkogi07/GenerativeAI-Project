@@ -4,20 +4,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-**Pin it!** is a mobile web prototype for finding and sharing location pins and wishlists, with reviews that show whether they are ads. The repo has planning documents (`docs/`) and a browser-only HTML prototype (`docs/prototype/`). The real React/Supabase app is not built yet; `main/` (empty `assets/`, `css/`, `js/`, `pages/` with `.gitkeep`) is reserved for that main development. The root `index.html` only redirects (meta refresh) to the prototype's `index.html`, and GitHub Pages serves it at https://salkogi07.github.io/GenerativeAI-Project/.
+**Pin it!** is a mobile web prototype for finding and sharing location pins and wishlists, with reviews that show whether they are ads. The repo has planning documents (`docs/`) and a browser-only HTML prototype (`docs/prototype/`). The real React/Supabase app is in `main/`, a Vite + React project (`cd main && npm install && npm run dev`, then http://localhost:5173). It is a React port of every prototype screen, with the prototype CSS copied as-is (`src/styles/common.css`, `src/styles/pages/*.css`, plus `src/styles/app.css`). Routes use HashRouter (`#/pin?id=p1`); `src/main.jsx` lists them. Shared UI lives in `src/ui/kit.jsx` (icons, `Screen` with tab bar and leave-guard, `ui.toast/dialog/sheet`, review cards, docs) and `src/ui/map.js` (Leaflet + OSM). Places come from Supabase (`src/lib/places.js`: search, within 300 m, by id). Accounts, pins, reviews and lists are still demo data in localStorage (`src/lib/store.js`, same seed and keys as the prototype). Move them to Supabase one at a time: accounts, then pins, reviews, lists. The Supabase URL and publishable/anon key go in `main/.env.local` as `VITE_SUPABASE_URL` / `VITE_SUPABASE_KEY` (template: `.env.example`, git-ignored). Never put the service_role/secret key there. The root `index.html` only redirects (meta refresh) to the prototype's `index.html`, and GitHub Pages serves it at https://salkogi07.github.io/GenerativeAI-Project/.
 
 The source of truth is [docs/prd/Pin it! PRD v0.2.pdf](docs/prd/), which updates v0.1 (확정본) to match wireframes v0.1–v0.3; its section 7-5 lists decisions still open. Read it before you design or build anything. When the 기획서 (proposal) and the 실습 (lab) disagree, the PRD follows 실습 2·3.
 
 ## Planned stack (from the PRD, not built yet)
 
-- **Front end:** React + Vite, with Leaflet + OpenStreetMap for the map.
+- **Front end:** React + Vite.
+- **Map:** Leaflet + OpenStreetMap standard tiles (no key). The user tried Naver Maps and dropped it (NCP needs a payment method and a 대표 계정 for the free quota), so don't bring Naver or Kakao back without asking. OSM tiles need a Referer (serve over http(s), not `file://`) and the © OpenStreetMap contributors attribution. The prototype still uses Leaflet with no tiles.
 - **Back end:** Supabase (Auth with email confirmation, Postgres + RLS, Storage, Edge Functions).
-- **Place search:** Kakao Local API, called only through an Edge Function. Nominatim is the fallback.
+- **Places (user's decision, replaces the PRD's Kakao Local API):** public open data, cleaned and stored in the Supabase `places` table (`supabase/migrations/`). Anyone can read it; writes happen only through the SQL editor or service_role (RLS has no write policy).
+  - Pipeline: put the raw JSON exports in `data/raw/`, run `python scripts/build_places.py` (check with `--selftest`), then paste `supabase/seed.sql` into the Supabase SQL editor. Outputs: `data/places.json`, `supabase/seed.sql`, and the geocode cache `data/geocode_cache.json`.
+  - Current sources: 서울시 주요 공원현황 (has coordinates, but about 9 rows have lat/lng swapped, some are strings like `127.13°` or multi-line, a few are null; the script fixes or skips them), 관악구 카페 현황 (2022; filter by 위생업태 커피숍/까페) and 강서구 카페 현황 (2025.8). The cafe files have no coordinates, so the script geocodes road addresses with the 브이월드 geocoder (`VWORLD_KEY` env). Nominatim was tested and could not find Korean road addresses.
+  - Each dataset's 공공누리 license must allow this use, and the app must show the source attribution.
 - **AI ad-review detection:** Gemini API, called from an Edge Function. Results are written to `review_ai_checks`, which only admins can read.
 
 Product rules that every screen and table must follow:
 
-- **Kakao data:** store only `kakao_place_id` and the place URL. Never store Kakao's name, address, coordinates or category. Pin names and coordinates come from user input only, so never prefill the name field from a search result.
+- **Pins and places:** a pin may link to a row in `places` (pin kind 장소) or stand alone (위치 핀). One pin per place; the 30 m rule catches the rest. Pin names come from user input, so never prefill the name field from place data.
 - **Ad label:** the 협찬·광고 label sits above the review body, in larger text and a different color. It shows only for the author's own checkbox or an admin's decision. Users never see AI verdicts.
 - **Lists:** private by default. Share links use a random `share_token` (UUID v4), not the list ID. A private or deleted list shows the same "볼 수 없는 리스트예요" message.
 - **Admin role:** `app_metadata.role = 'admin'`, enforced by RLS. Hiding a menu in the UI is not a security control.
@@ -43,7 +47,7 @@ A clickable HTML/CSS/JS prototype that looks like the real service. Open `docs/p
   - Demo accounts: `demo@pinit.kr` / `pinit1234` (a new account, so the review limit applies) and `admin@pinit.kr` / `pinit1234` (admin).
   - **Login is stubbed for now (user's request; real checks come later).** Pressing 로그인 always succeeds. It logs in as the account whose email was typed, or as `demo@pinit.kr` if that email doesn't exist. The password is not checked.
     - Restore the checks in `js/pages/login.js` when login is reworked: password match, the unverified-email notice (`#unverified`) and resend.
-  - Place search results are the fixed `PLACES` list, which stands in for Kakao.
+  - Place search results are the fixed `PLACES` list, which stands in for the Supabase `places` table.
   - AI verdicts are the fixed `AI_EXAMPLES`. They appear only on `admin.html`, and must always carry the "예시 데이터" badge.
 - **Map:** Leaflet 1.9.4 from cdnjs, with **no tile layer for now**. The user asked not to load real maps yet, so the map shows a grid background (`.leaflet-container` in `common.css`) with pins only.
   - **When tiles are added:** add `L.tileLayer` in `makeMap` (`js/map.js`).
