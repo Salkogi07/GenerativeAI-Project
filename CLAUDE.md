@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-**Pin it!** is a mobile web prototype for finding and sharing location pins and wishlists, with reviews that show whether they are ads. The repo has planning documents (`docs/`) and a browser-only HTML prototype (`docs/prototype/`). The real React/Supabase app is not built yet. The root `index.html` only redirects (meta refresh) to the prototype start page, and GitHub Pages serves it at https://salkogi07.github.io/GenerativeAI-Project/.
+**Pin it!** is a mobile web prototype for finding and sharing location pins and wishlists, with reviews that show whether they are ads. The repo has planning documents (`docs/`) and a browser-only HTML prototype (`docs/prototype/`). The real React/Supabase app is not built yet; `main/` (empty `assets/`, `css/`, `js/`, `pages/` with `.gitkeep`) is reserved for that main development. The root `index.html` only redirects (meta refresh) to the prototype start page, and GitHub Pages serves it at https://salkogi07.github.io/GenerativeAI-Project/.
 
 The source of truth is [docs/prd/Pin it! PRD v0.1 (확정본).pdf](docs/prd/). Read it before you design or build anything. When the 기획서 (proposal) and the 실습 (lab) disagree, the PRD follows 실습 2·3.
 
