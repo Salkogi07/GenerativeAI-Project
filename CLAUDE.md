@@ -32,7 +32,7 @@ Product rules that every screen and table must follow:
 
 A clickable HTML/CSS/JS prototype that looks like the real service. Open `docs/prototype/pages/index.html` in a browser; there is no build step.
 
-- **Bottom tabs (user's request):** 3 tabs, 홈·피드·마이페이지 (`TABS` in `js/ui.js`). 찜 리스트 was removed from the tab bar on request; lists open from the 마이페이지 stats tile (`lists.html` is a ← page under `data-nav="마이페이지"`). The user earlier wanted 4 tabs and said to consider adding one back if it drops to 3, so ask before adding a 4th. Search has no tab; it opens from the home search pill.
+- **Bottom tabs (user's request):** 3 tabs, 홈·피드·마이페이지 (`TABS` in `js/ui.js`). 찜 리스트 was removed from the tab bar on request; lists open from the 마이페이지 stats tile (`lists.html` is a ← page under `data-nav="마이페이지"`). The stats tiles (찍은 핀·쓴 리뷰·찜 리스트) toggle an inline panel below them with the latest 3 items plus a 전체 보기 link to the full page (user's final choice); they don't navigate directly. The user earlier wanted 4 tabs and said to consider adding one back if it drops to 3, so ask before adding a 4th. Search has no tab; it opens from the home search pill.
   - Detail pages show the tab bar too (user's request): `pin.html`, `pin-new.html`, `region.html`, `search.html` use `data-nav="홈"`; `mine.html`, `lists.html`, `list.html` use `data-nav="마이페이지"`.
   - The tab bar hides while a text input or textarea has focus (`.scr:has(...:focus)` in `common.css`), so it never floats above the mobile keyboard. Tapping a tab while a `[data-guard]` form is dirty asks before leaving.
   - The account tab is called 마이페이지, not 내 정보.

@@ -35,6 +35,39 @@ $('#locRow').onclick = () => {
   updateMe(x => { x.location = x.location === false; });
   toast(me().location === false ? '위치 정보 이용을 껐어요' : '위치 정보 이용을 켰어요');
 };
+// 활동 칸을 누르면 페이지 이동 대신 아래로 최근 3개를 펼쳐요. 다시 누르면 접혀요.
+const tiles = $$('.stats>a');
+const panel = {
+  pin: () => {
+    const a = pins().filter(p => p.author === u.email).sort((x, y) => y.created - x.created);
+    return [a.length, '아직 찍은 핀이 없어요', a.slice(0, 3).map(p => `<a class="row" href="pin.html?id=${p.id}">
+      ${p.photos?.length ? photoHTML(p.photos[0], `${p.name} 사진`, 'thumb') : `<span class="thumb tint">${icon('pin')}</span>`}
+      <span class="fl"><span class="t ell">${esc(p.name)}</span><span class="s">${esc(pinKind(p))} · 리뷰 ${visibleCount(p.id)} · ${ago(p.created)}</span></span></a>`)];
+  },
+  review: () => {
+    const a = reviews().filter(r => r.by === u.email).sort((x, y) => y.at - x.at);
+    return [a.length, '아직 쓴 리뷰가 없어요', a.slice(0, 3).map(reviewLinkHTML)];
+  },
+  list: () => {
+    const a = lists().filter(l => l.owner === u.email).sort((x, y) => y.updated - x.updated);
+    return [a.length, '아직 만든 리스트가 없어요', a.slice(0, 3).map(l => `<a class="row" href="list.html?id=${l.id}">
+      <span class="thumb ${l.public ? 'tint' : ''}">${icon(l.public ? 'globe' : 'lock')}</span>
+      <span class="fl"><span class="t ell">${esc(l.name)}</span><span class="s">핀 ${l.pins.length} · ${l.public ? '공개' : '비공개'}</span></span></a>`)];
+  },
+};
+const kinds = ['pin', 'review', 'list'];
+tiles.forEach((t, i) => {
+  t.onclick = e => {
+    e.preventDefault();
+    const open = !t.classList.contains('on');
+    tiles.forEach(x => x.classList.toggle('on', x === t && open));
+    $('#statPanel').hidden = !open;
+    if (!open) return;
+    const [n, emptyMsg, rows] = panel[kinds[i]]();
+    $('#statPanel').innerHTML = (n ? rows.join('') : `<div class="sp-empty">${emptyMsg}</div>`)
+      + `<a class="sp-all" href="${t.getAttribute('href')}">${n > 3 ? `전체 ${n}개 보기` : '전체 보기'}${icon('chev', 'xs')}</a>`;
+  };
+});
 $$('[data-doc]').forEach(b => { b.onclick = () => openDoc(b.dataset.doc); });
 $('#logout').onclick = async () => {
   if (!(await dialog({ title: '로그아웃할까요?', ok: '로그아웃' }))) return;
