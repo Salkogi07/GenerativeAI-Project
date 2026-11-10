@@ -39,13 +39,13 @@ $$('[data-doc]').forEach(b => { b.onclick = () => openDoc(b.dataset.doc); });
 $('#logout').onclick = async () => {
   if (!(await dialog({ title: '로그아웃할까요?', ok: '로그아웃' }))) return;
   DB.set('session', null);
-  go('index.html');
+  go('login.html');
 };
 $('#leave').onclick = async () => {
   if (!(await dialog({ title: '정말 탈퇴할까요?', body: '이메일·닉네임과 내 리스트가 바로 삭제되고 되돌릴 수 없어요.', ok: '탈퇴하기', danger: true }))) return;
   save('lists', lists().filter(l => l.owner !== u.email));
   save('users', users().filter(x => x.email !== u.email));
   DB.set('session', null);
-  go('index.html');
+  go('login.html');
 };
 render();

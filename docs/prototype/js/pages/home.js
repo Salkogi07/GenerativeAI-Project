@@ -21,6 +21,13 @@ function show(p, mk) {
   selected = mk;
   $('#pvName').textContent = p.name;
   $('#pvSub').textContent = `${pinKind(p)} · 리뷰 ${visibleCount(p.id)} · 찜 ${likeCount(p.id)}`;
+  $('#pvDesc').textContent = p.desc || '아직 설명이 없어요.';
+  const rs = pinReviews(p.id).filter(r => !r.hidden).slice(0, 2);
+  $('#pvRvs').innerHTML = rs.length ? `<span class="pv-h">최근 리뷰</span>` + rs.map(r => `<span class="pv-rv">
+    <span class="pv-who">${esc(nickOf(r.by, r.nick))} · ${ago(r.at)}</span>
+    ${r.ad || r.adminLabel ? '<span class="ad-label">협찬·광고</span>' : ''}<span class="pv-body">${esc(r.body)}</span></span>`).join('')
+    : '<span class="pv-h">아직 리뷰가 없어요. 첫 리뷰를 남겨 보세요.</span>';
+  $('#pvBy').textContent = `${nickOf(p.author)} 님의 핀`;
   $('#preview').href = `pin.html?id=${p.id}`;
   $('#preview').hidden = false;
   $('#fab').hidden = $('#loc').hidden = true;

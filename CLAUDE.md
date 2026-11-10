@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-**Pin it!** is a mobile web prototype for finding and sharing location pins and wishlists, with reviews that show whether they are ads. The repo has planning documents (`docs/`) and a browser-only HTML prototype (`docs/prototype/`). The real React/Supabase app is not built yet; `main/` (empty `assets/`, `css/`, `js/`, `pages/` with `.gitkeep`) is reserved for that main development. The root `index.html` only redirects (meta refresh) to the prototype start page, and GitHub Pages serves it at https://salkogi07.github.io/GenerativeAI-Project/.
+**Pin it!** is a mobile web prototype for finding and sharing location pins and wishlists, with reviews that show whether they are ads. The repo has planning documents (`docs/`) and a browser-only HTML prototype (`docs/prototype/`). The real React/Supabase app is not built yet; `main/` (empty `assets/`, `css/`, `js/`, `pages/` with `.gitkeep`) is reserved for that main development. The root `index.html` only redirects (meta refresh) to the prototype's `index.html`, and GitHub Pages serves it at https://salkogi07.github.io/GenerativeAI-Project/.
 
 The source of truth is [docs/prd/Pin it! PRD v0.1 (확정본).pdf](docs/prd/). Read it before you design or build anything. When the 기획서 (proposal) and the 실습 (lab) disagree, the PRD follows 실습 2·3.
 
@@ -30,7 +30,9 @@ Product rules that every screen and table must follow:
 
 ## Prototype (`docs/prototype/`)
 
-A clickable HTML/CSS/JS prototype that looks like the real service. Open `docs/prototype/pages/index.html` (the start screen) in a browser; there is no build step.
+A clickable HTML/CSS/JS prototype that looks like the real service. Open `docs/prototype/pages/index.html` in a browser; there is no build step.
+
+- **No start screen (user's request).** `index.html` signs in as `demo@pinit.kr` when there is no session and goes straight to the `home.html` map, so 핀 찍기 never shows a login screen. Logout and account deletion go to `login.html` instead (going to `index.html` would sign in again).
 
 - **Data:** everything is demo data in the browser's localStorage, under keys prefixed `pinit.`. Seed data lives in `js/data.js`.
   - Demo accounts: `demo@pinit.kr` / `pinit1234` (a new account, so the review limit applies) and `admin@pinit.kr` / `pinit1234` (admin).
@@ -104,4 +106,5 @@ This is the current one. Start at `index.html`, which lists every screen.
 
 - Windows. Python is 3.13; run it with `PYTHONIOENCODING=utf-8` when printing Korean text, because the console code page is cp949.
 - Chrome is at `C:/Program Files/Google/Chrome/Application/chrome.exe`.
-- Pages load Pretendard from the jsDelivr CDN. Without a network connection they fall back to Malgun Gothic.
+- The prototype's body font is `NanumBarunGothic` (나눔바른고딕, the user's choice, `@font-face` in `common.css`), with Pretendard as fallback; both load from the jsDelivr CDN. Without a network connection they fall back to Malgun Gothic.
+  - Only the 400 weight exists on that CDN, so bold text is browser-synthesized. Don't add `font-synthesis:none` or bold disappears.
