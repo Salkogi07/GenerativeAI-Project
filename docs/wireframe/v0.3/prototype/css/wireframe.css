@@ -1,0 +1,133 @@
+/*
+ * Low-fidelity grayscale wireframe layer.
+ * Loaded after the existing page styles so layout and interactions stay intact.
+ */
+:root {
+  --text: #242424;
+  --sub: #606060;
+  --mute: #8a8a8a;
+  --line: #b8b8b8;
+  --surface: #e7e7e7;
+  --bg: #f7f7f7;
+  --brand: #555;
+  --brand-d: #3d3d3d;
+  --brand-weak: #dedede;
+  --ad: #4b4b4b;
+  --ad-weak: #d5d5d5;
+  --err: #4a4a4a;
+  --ok: #555;
+  --example: #555;
+  --example-weak: #ddd;
+  --r: 4px;
+}
+
+html, body { background: #dedede; }
+body { color: var(--text); }
+.phone { background: var(--bg); }
+@media (min-width: 481px) {
+  body { background: #d7d7d7; }
+  .phone { box-shadow: 0 0 0 1px #a0a0a0; }
+}
+
+/* Remove polished visual effects and keep simple structural outlines. */
+*, *::before, *::after {
+  text-shadow: none !important;
+}
+.btn, .chip, .fab, .fab-main, .preview, .hero-card, .search-pill,
+.mine-bar, .sheet, .dialog, .toast, .thumb, .photo, .notice,
+.control, .check.boxed, .new-box {
+  box-shadow: none !important;
+}
+
+.top, .tabbar, .cta, .seg, .sheet, .dialog { background: #f4f4f4; }
+.top { border-bottom: 1px solid var(--line); }
+.divider, .demo-strip { background: #d8d8d8; }
+
+/* Main controls: plain blocks and obvious outlines. */
+.btn {
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: #5b5b5b;
+  color: #fff;
+  transition: none;
+}
+.btn:active { background: #444; }
+.btn.sec, .btn.line {
+  background: #ededed;
+  color: #292929;
+  border-color: #969696;
+}
+.btn.danger { background: #555; }
+.btn:disabled { background: #d8d8d8; color: #888; border-color: #aaa; }
+.icon-btn, .fab { border-radius: 4px; }
+.icon-btn:active { background: #ddd; }
+.fab, .fab-main { border: 1px solid #777; }
+.fab-main { background: #555; border-radius: 4px; }
+
+.control {
+  background: #eee;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+  transition: none;
+}
+.control:focus-within, .control.bad { background: #fafafa; border: 2px solid #555; }
+.check.boxed, .notice, .sheet .new-box { background: #e6e6e6; border: 1px solid #aaa; }
+.box, .radio { border-color: #777; border-radius: 2px; }
+.radio { border-radius: 50%; }
+.on > .box, .check input:checked + .box { background: #555; border-color: #555; }
+.on > .radio { border-color: #555; }
+.switch { background: #bbb; border: 1px solid #888; }
+.switch.on { background: #666; }
+.switch::after { box-shadow: none; }
+
+.chip, .tag, .ad-label, .example {
+  background: #e4e4e4;
+  color: #4b4b4b;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+}
+.chip.on { background: #555; color: #fff; border-color: #555; }
+.tag.pub { background: #d8d8d8; color: #444; }
+.req, .text-link.brand-link, .step-t { color: #444; }
+
+/* Media becomes a neutral placeholder instead of a finished visual asset. */
+img { filter: grayscale(1) contrast(.75); opacity: .72; }
+.thumb, .photo, .ph-1, .ph-2, .ph-3 {
+  background: #d3d3d3 !important;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+}
+.thumb.tint, .avatar { background: #d8d8d8; color: #555; }
+.avatar { border: 1px solid #aaa; }
+.photo-add { border-color: #888; border-radius: 3px; background: #eee; }
+
+/* Maps remain usable but read as diagrammatic wireframes. */
+.map, .leaflet-container {
+  background-color: #d9d9d9 !important;
+  background-image: linear-gradient(#c4c4c4 1px, transparent 1px),
+                    linear-gradient(90deg, #c4c4c4 1px, transparent 1px) !important;
+  background-size: 32px 32px !important;
+  filter: grayscale(1);
+}
+.leaflet-tile-pane { opacity: .38; }
+.leaflet-control-attribution { background: rgba(238,238,238,.9) !important; }
+.mk, .mk.new, .mk.loc, .mk.dim { background: #555; border-color: #eee; box-shadow: none; }
+.preview, .hero-card { background: #eee; border: 1px solid #888; border-radius: 4px; }
+.guide { background: rgba(70,70,70,.9); border-radius: 3px; }
+
+.brand::before { background: #555; box-shadow: inset 0 0 0 4px #555, inset 0 0 0 7px #eee; }
+.seg button.on::after, .steps i.on { background: #555; }
+.dim { background: rgba(60,60,60,.45); }
+.sheet, .dialog { border: 1px solid #888; border-radius: 6px 6px 0 0; }
+.dialog { border-radius: 4px; }
+.toast { background: #444; border: 1px solid #222; border-radius: 3px; }
+.toast button, .toast a { color: #fff; text-decoration: underline; }
+.notice.warn, .notice.info { background: #dedede; }
+.notice.warn b, .hint.bad, .hint.good { color: #444; }
+
+/* Keep the hierarchy readable while avoiding production-design decoration. */
+.h1, .big-title { letter-spacing: 0; }
+.row:active { background: #ddd; }
+.row + .row, .rv { border-color: #bbb; }
+.empty .ic { border: 1px dashed #999; border-radius: 4px; }
+

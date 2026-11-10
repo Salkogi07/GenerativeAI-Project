@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>내 정보 · Pin it!</title>
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/pages/me.css">
+<link rel="stylesheet" href="../css/wireframe.css">
+</head>
+<body>
+<div class="phone"><div class="scr" data-nav="내 정보">
+  <div class="top"><span class="brand">Pin it!</span></div>
+  <div class="body" id="guest" hidden>
+    <div class="empty"><span class="ic"><i data-i="user"></i></span><div class="t">로그인이 필요해요</div><div class="s">로그인하면 핀을 남기고<br>리스트를 만들 수 있어요.</div>
+      <a class="btn fit" href="login.html?next=me.html">로그인</a><a class="text-link" href="terms.html">회원가입</a></div>
+  </div>
+  <div class="body" id="member" hidden>
+    <div class="big-title">내 정보</div>
+    <div class="profile">
+      <span class="avatar lg" id="av"></span>
+      <div class="fl">
+        <div class="p-nick" id="nick"></div>
+        <div class="p-mail ell" id="email"></div>
+        <div class="p-date" id="joined"></div>
+      </div>
+      <button class="btn sm sec" id="editNick">수정</button>
+    </div>
+    <div class="stats">
+      <a href="home.html?mine=1"><b class="num" id="sPins"></b><span>찍은 핀</span></a>
+      <div><b class="num" id="sReviews"></b><span>쓴 리뷰</span></div>
+      <a href="lists.html"><b class="num" id="sLists"></b><span>리스트</span></a>
+    </div>
+    <div class="notice info inset" id="limit" hidden><b>새로 가입한 계정은 리뷰를 하루 3개까지 쓸 수 있어요</b><div class="s" id="limitS"></div></div>
+
+    <div class="sec-h">계정</div>
+    <button class="row" id="pw"><span class="fl t plain">비밀번호 변경</span><span class="chev"><i data-i="chev" class="sm"></i></span></button>
+    <button class="row" id="locRow" role="switch"><span class="fl"><span class="t plain">위치 정보 이용</span><span class="s">내 위치로 지도를 옮길 때만 써요</span></span><span class="switch" id="loc"></span></button>
+
+    <a class="row admin-row" id="admin" href="admin.html" hidden><span class="thumb tint md"><i data-i="shield"></i></span><span class="fl"><span class="t">리뷰 검토</span><span class="s">운영자 전용</span></span><span class="chev"><i data-i="chev" class="sm"></i></span></a>
+
+    <div class="sec-h">정보</div>
+    <button class="row" data-doc="terms"><span class="fl t plain">서비스 이용약관</span><span class="chev"><i data-i="chev" class="sm"></i></span></button>
+    <button class="row" data-doc="privacy"><span class="fl t plain">개인정보 처리방침</span><span class="chev"><i data-i="chev" class="sm"></i></span></button>
+    <button class="row" data-doc="review"><span class="fl t plain">리뷰 작성 원칙</span><span class="chev"><i data-i="chev" class="sm"></i></span></button>
+    <div class="row"><span class="fl t plain">지도 데이터</span><span class="end">© OpenStreetMap contributors</span></div>
+    <div class="row"><span class="fl t plain">버전</span><span class="end num">1.0.0</span></div>
+
+    <div class="pad stack account-actions">
+      <button class="btn sec" id="logout">로그아웃</button>
+      <button class="text-link center leave" id="leave">회원 탈퇴</button>
+    </div>
+  </div>
+</div></div>
+<script src="../js/core.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/pages/me.js"></script>
+</body>
+</html>

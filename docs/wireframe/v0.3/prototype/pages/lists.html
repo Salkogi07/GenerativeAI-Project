@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>내 리스트 · Pin it!</title>
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/wireframe.css">
+</head>
+<body>
+<div class="phone"><div class="scr" data-nav="리스트">
+  <div class="top"><span class="brand">Pin it!</span><button class="icon-btn" id="add" aria-label="새 리스트 만들기"><i data-i="plus"></i></button></div>
+  <div class="body">
+    <div class="big-title">내 찜 리스트</div>
+    <div id="rows"></div>
+    <div class="pad" id="addWrap" hidden><button class="btn sec" id="add2"><i data-i="plus" class="sm"></i>새 리스트 만들기</button></div>
+    <div class="empty" id="empty" hidden><span class="ic"><i data-i="bookmark"></i></span><div class="t">마음에 드는 핀을 모아 보세요</div><div class="s">주제별 리스트를 만들고 친구에게 링크로 보낼 수 있어요.</div><button class="btn fit" id="add3">새 리스트 만들기</button></div>
+    <div class="empty" id="guest" hidden><span class="ic"><i data-i="lock"></i></span><div class="t">로그인하고 리스트를 만들어 보세요</div><div class="s">찜한 핀을 주제별로 모아 볼 수 있어요.</div><a class="btn fit" href="login.html?next=lists.html">로그인</a></div>
+  </div>
+</div></div>
+<script src="../js/core.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/pages/lists.js"></script>
+</body>
+</html>

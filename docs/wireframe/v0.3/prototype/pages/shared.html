@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>공유 리스트 · Pin it!</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/pages/shared.css">
+<link rel="stylesheet" href="../css/wireframe.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+</head>
+<body>
+<div class="phone"><div class="scr">
+  <div class="top line"><a class="brand" href="index.html">Pin it!</a><a class="btn sm sec login-btn" id="login" href="login.html">로그인</a></div>
+  <div class="body" id="page" hidden>
+    <div class="pad list-head">
+      <span class="tag pub"><i data-i="globe"></i>공개 리스트</span>
+      <h1 class="list-name" id="name"></h1>
+      <div class="list-meta" id="meta"></div>
+    </div>
+    <div class="map h220" id="map"></div>
+    <div id="rows"></div>
+  </div>
+  <div class="cta" id="cta" hidden><a class="btn sec" href="home.html"><i data-i="map" class="sm"></i>Pin it!에서 더 둘러보기</a></div>
+  <div class="empty" id="blocked" hidden><span class="ic"><i data-i="lock"></i></span><div class="t">볼 수 없는 리스트예요</div><div class="s">비공개로 바뀌었거나 삭제된 리스트예요.</div><a class="btn fit" href="home.html">지도 홈으로 가기</a></div>
+</div></div>
+<script src="../js/core.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/map.js"></script>
+<script src="../js/pages/shared.js"></script>
+</body>
+</html>

@@ -122,7 +122,7 @@
 index.html          프로토타입 지도 홈으로 이동
 main/               메인 개발 폴더 (준비 중)
 docs/
-├─ prd/             PRD v0.1 (확정본)
+├─ prd/             PRD v0.2 (최신) · v0.1 (확정본)
 ├─ prototype/
 │  ├─ pages/        화면 HTML (index.html → 지도 홈)
 │  ├─ css/          common.css(공통) · pages/(화면별)
