@@ -14,3 +14,6 @@
 .ftile .rank{position:absolute;left:8px;top:8px;z-index:1;min-width:26px;height:26px;padding:0 7px;border-radius:13px;background:#fff;color:var(--text);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
 .ftile .rank.top{background:var(--brand);color:#fff}
 .ftile .cnt{position:absolute;right:8px;top:8px;z-index:1;height:24px;padding:0 8px;border-radius:12px;background:rgba(17,19,24,.55);font-size:12px;display:flex;align-items:center;gap:3px}
+.feed-search{flex:none;padding:4px 16px 10px;background:var(--bg)}
+.feed-search .search-box{min-height:44px;border-radius:22px}
+.feed-search input{height:42px;font-size:16px}

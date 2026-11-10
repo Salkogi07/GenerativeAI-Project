@@ -10,12 +10,19 @@
 <body>
 <div class="phone"><div class="scr" data-nav="피드">
   <div class="top"><span class="brand">Pin it!</span></div>
+  <form class="feed-search" id="f" role="search">
+    <div class="control search-box">
+      <i data-i="search" class="sm muted"></i>
+      <input id="q" type="search" enterkeyhint="search" placeholder="피드에서 장소, 리뷰 검색" maxlength="50" autocomplete="off" aria-label="피드 검색">
+      <button type="button" class="aside" id="clear" aria-label="지우기" hidden><i data-i="close" class="sm"></i></button>
+    </div>
+  </form>
   <div class="seg" id="tabs"><button class="on" data-tab="photo">장소 사진</button><button data-tab="review">리뷰</button></div>
   <div class="body">
     <div class="chips sort-chips" id="sort" role="radiogroup" aria-label="정렬"></div>
     <div class="feed-grid" id="grid"></div>
     <div id="rvs" hidden></div>
-    <div class="empty" id="empty" hidden><span class="ic"><i data-i="feed"></i></span><div class="t">아직 보여 줄 리뷰가 없어요</div><div class="s">장소에 첫 리뷰를 남겨 보세요.</div><a class="btn fit" href="home.html">지도에서 찾기</a></div>
+    <div class="empty" id="empty" hidden><span class="ic"><i data-i="feed"></i></span><div class="t" id="emptyT"></div><div class="s" id="emptyS"></div><a class="btn fit" href="home.html">지도에서 찾기</a></div>
   </div>
   <div class="demo-strip">시연용 가상 데이터 · 성수동</div>
 </div></div>
