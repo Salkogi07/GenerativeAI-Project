@@ -146,7 +146,7 @@ function reviewLinkHTML(r) {
 }
 
 // ---------- chrome: tab bar, icons, ?toast= ----------
-const TABS = [['홈', 'home.html', 'home'], ['피드', 'feed.html', 'feed'], ['찜 리스트', 'lists.html', 'bookmark'], ['마이페이지', 'me.html', 'user']];
+const TABS = [['홈', 'home.html', 'home'], ['피드', 'feed.html', 'feed'], ['마이페이지', 'me.html', 'user']];
 (function chrome() {
   const scr = $('.scr');
   const on = scr.dataset.nav;

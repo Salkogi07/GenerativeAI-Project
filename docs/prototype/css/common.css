@@ -62,6 +62,7 @@ ul{padding-left:18px}
 .tabbar{height:62px;flex:none;display:flex;border-top:1px solid var(--line);background:var(--bg);position:relative;z-index:4}
 .tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:600;color:var(--mute)}
 .tabbar a.on{color:var(--text)}
+.scr:has(input:not([type=checkbox]):not([type=file]):focus,textarea:focus) .tabbar{display:none} /* 입력 중에는 키보드 위로 탭이 뜨지 않게 */
 .tabbar a.on .i{stroke-width:2.3}
 
 /* ---------- buttons ---------- */
