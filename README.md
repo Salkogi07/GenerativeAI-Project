@@ -125,13 +125,16 @@
 
 ```
 index.html          프로토타입 시작 화면으로 이동
-prototype/
-├─ pages/           화면 HTML (시작 화면: index.html)
-├─ css/             common.css(공통) · pages/(화면별)
-└─ js/              core·data·ui·map.js(공통) · pages/(화면별)
+main/               메인 개발 폴더 (준비 중)
 docs/
-├─ prd/             PRD v1.0 (확정본)
-└─ wireframe/       PDF·HTML 와이어프레임
+├─ prd/             PRD v0.1 (확정본)
+├─ prototype/
+│  ├─ pages/        화면 HTML (시작 화면: index.html)
+│  ├─ css/          common.css(공통) · pages/(화면별)
+│  └─ js/           core·data·ui·map.js(공통) · pages/(화면별)
+└─ wireframe/
+   ├─ v0.1/         이전 와이어프레임 (HTML 1개)
+   └─ v0.2/html/    HTML 와이어프레임 · PDF
 ```
 
 기획 문서 안내는 [docs/README.md](docs/README.md)에 있어요.
