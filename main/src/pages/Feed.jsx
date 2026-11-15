@@ -21,7 +21,7 @@ export default function Feed() {
   };
   const ps = tab === 'photo' ? order(pins().filter(p => hit(`${p.name} ${p.cat} ${p.desc || ''} ${nickOf(p.author)}`, ws)), p => p.created, p => p) : [];
   const rs = tab === 'review' ? order(reviews().filter(r => !r.hidden && pinById(r.pin)
-    && hit(`${r.body} ${pinById(r.pin).name} ${nickOf(r.by, r.nick)}`, ws)), r => r.at, r => pinById(r.pin)) : [];
+    && hit(`${r.body} ${pinById(r.pin).name} ${nickOf(r.by)}`, ws)), r => r.at, r => pinById(r.pin)) : [];
   const n = tab === 'photo' ? ps.length : rs.length;
 
   return <Screen nav="피드" title="피드">
@@ -48,6 +48,5 @@ export default function Feed() {
         <div className="s">{q.trim() ? '다른 단어로 검색하거나 다른 탭에서 찾아보세요.' : '장소에 첫 핀과 리뷰를 남겨 보세요.'}</div>
         <Link className="btn fit" to="/home">지도에서 찾기</Link></div>}
     </div>
-    <div className="demo-strip">시연용 가상 데이터 · 성수동</div>
   </Screen>;
 }

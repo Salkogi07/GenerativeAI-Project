@@ -1,7 +1,8 @@
 // 핀 상세: 정보·설명, 리뷰 목록(협찬·광고 라벨, 신고 숨김), 리뷰 메뉴 → 신고 시트, 찜하기 시트.
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { likeCount, lists, me, nickOf, pinById, pinReviews, reviews, save, uid, useStore, uuid } from '../lib/store.js';
+import { likeCount, lists, me, nickOf, pinById, pinReviews, refresh, reviews, run, useStore } from '../lib/store.js';
+import { supabase } from '../supabase.js';
 import { BackBtn, Icon, Photo, ReviewCard, Screen, ui, useNeedLogin } from '../ui/kit.jsx';
 import { L, markerIcon, useMap } from '../ui/map.js';
 
@@ -16,8 +17,8 @@ export default function Pin() {
     <div className="empty"><span className="ic"><Icon n="pin" /></span><div className="t">찾을 수 없는 핀이에요</div><div className="s">숨겨졌거나 삭제된 핀이에요.</div><Link className="btn fit" to="/home">지도 홈으로 가기</Link></div>
   </Screen>;
 
-  const isMine = u?.email === pin.author, rs = pinReviews(pin.id), mine = rs.find(r => r.by === u?.email);
-  const inMine = !!u && lists().some(l => l.owner === u.email && l.pins.includes(pin.id));
+  const isMine = !!u && u.id === pin.author, rs = pinReviews(pin.id), mine = u && rs.find(r => r.by === u.id);
+  const inMine = !!u && lists().some(l => l.owner === u.id && l.pins.includes(pin.id));
   const scrollTo = id => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
   const share = async () => {
@@ -34,12 +35,12 @@ export default function Pin() {
   };
   // 리뷰 메뉴 → 삭제(내 리뷰) / 신고(남의 리뷰)
   const more = r => {
-    if (u?.email === r.by) return ui.sheet(close => <div className="menu-sheet">
+    if (u && u.id === r.by) return ui.sheet(close => <div className="menu-sheet">
       <button className="danger" onClick={async () => {
         close();
         if (!(await ui.dialog({ title: '리뷰를 삭제할까요?', body: '삭제한 리뷰는 되돌릴 수 없어요.', ok: '삭제', danger: true }))) return;
-        save('reviews', reviews().filter(x => x.id !== r.id));
-        ui.toast('리뷰를 삭제했어요');
+        const { error } = await run(supabase.from('reviews').delete().eq('id', r.id));
+        ui.toast(error ? '삭제하지 못했어요. 다시 시도해 주세요' : '리뷰를 삭제했어요');
       }}><Icon n="trash" />내 리뷰 삭제</button>
       <button onClick={close}><Icon n="close" />닫기</button></div>);
     ui.sheet(close => <div className="menu-sheet">
@@ -95,14 +96,15 @@ function PinMap({ pin }) {
 
 function ReportSheet({ rid, close }) {
   const [reason, setReason] = useState('');
-  const send = () => {
-    const u = me(), all = reviews(), r = all.find(x => x.id === rid);
+  // 서로 다른 계정 3건이면 서버(트리거)가 자동으로 숨겨요
+  const send = async () => {
+    const u = me(), r = reviews().find(x => x.id === rid);
     close();
-    if (r.reports.some(x => x.by === u.email)) return ui.toast('이미 신고한 리뷰예요');
-    r.reports.push({ by: u.email, reason, at: Date.now() });
-    if (new Set(r.reports.map(x => x.by)).size >= 3) r.hidden = true; // 서로 다른 계정 3건 → 자동 숨김
-    save('reviews', all);
-    ui.toast(r.hidden ? '신고가 쌓여 리뷰를 가렸어요. 운영자가 검토해요' : '신고했어요. 운영자가 확인할게요');
+    if (r?.reports.some(x => x.by === u.id)) return ui.toast('이미 신고한 리뷰예요');
+    const { error } = await run(supabase.from('reports').insert({ review_id: rid, reason }));
+    if (error) return ui.toast(error.code === '23505' ? '이미 신고한 리뷰예요' : '신고하지 못했어요. 다시 시도해 주세요');
+    const hid = !reviews().some(x => x.id === rid && !x.hidden);
+    ui.toast(hid ? '신고가 쌓여 리뷰를 가렸어요. 운영자가 검토해요' : '신고했어요. 운영자가 확인할게요');
   };
   return <><h3>리뷰 신고</h3><p className="lead">신고 이유를 골라 주세요. 신고한 사람은 공개되지 않아요.</p>
     <div>{REASONS.map(x => <button key={x} className={`check ${reason === x ? 'on' : ''}`} onClick={() => setReason(x)}><span className="radio" /><span className="fl">{x}</span></button>)}</div>
@@ -111,21 +113,22 @@ function ReportSheet({ rid, close }) {
 
 // 찜하기: 여러 리스트에 담기 + 새 리스트(기본 비공개)
 function LikeSheet({ pin, close }) {
-  const u = me(), mine = lists().filter(l => l.owner === u.email);
+  const u = me(), mine = lists().filter(l => l.owner === u.id);
   const [sel, setSel] = useState(() => new Set(mine.filter(l => l.pins.includes(pin.id)).map(l => l.id)));
   const [name, setName] = useState(''), [pub, setPub] = useState(false);
   const n = sel.size + (name.trim() ? 1 : 0);
   const toggle = id => setSel(s => { const t = new Set(s); t.has(id) ? t.delete(id) : t.add(id); return t; });
-  const submit = () => {
-    const all = lists(), now = Date.now(), nm = name.trim();
-    all.forEach(l => {
-      if (l.owner !== u.email) return;
+  const submit = async () => {
+    const now = new Date().toISOString(), nm = name.trim(), qs = [];
+    for (const l of mine) {
       const has = l.pins.includes(pin.id), want = sel.has(l.id);
-      if (has !== want) { l.pins = want ? [...l.pins, pin.id] : l.pins.filter(x => x !== pin.id); l.updated = now; }
-    });
-    if (nm) all.push({ id: 'l' + uid(), name: nm, owner: u.email, public: pub, token: uuid(), pins: [pin.id], updated: now });
-    save('lists', all);
+      if (has !== want) qs.push(supabase.from('lists').update({ pin_ids: want ? [...l.pins, pin.id] : l.pins.filter(x => x !== pin.id), updated_at: now }).eq('id', l.id));
+    }
+    if (nm) qs.push(supabase.from('lists').insert({ name: nm, is_public: pub, pin_ids: [pin.id] }));
+    const bad = (await Promise.all(qs)).some(x => x.error);
+    await refresh().catch(() => {});
     close();
+    if (bad) return ui.toast('일부 리스트를 저장하지 못했어요. 다시 시도해 주세요');
     ui.toast(n ? `${n}개 리스트에 저장했어요` : '리스트에서 뺐어요', { label: '리스트 보기', to: '/lists' });
   };
   return <><h3>리스트에 담기</h3><p className="lead">여러 리스트에 한 번에 담을 수 있어요.</p>

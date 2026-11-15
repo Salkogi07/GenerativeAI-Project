@@ -1,28 +1,34 @@
 // 리뷰 쓰기: 작성 제한 검사, 협찬·광고 체크, 사진(형식·용량 검사, 재인코딩으로 EXIF 제거).
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { DAY, addPhotos, isNew, me, pinById, reviews, save, todayCount, uid } from '../lib/store.js';
+import { DAY, addPhotos, isNew, me, pinById, reviews, run, todayCount, uploadPhotos } from '../lib/store.js';
+import { supabase } from '../supabase.js';
 import { BackBtn, Icon, PhotoPicker, Screen, clean, ui } from '../ui/kit.jsx';
 
 export default function ReviewNew() {
   const [sp] = useSearchParams(), nav = useNavigate(), u = me(), pin = pinById(sp.get('pin'));
   const [body, setBody] = useState(''), [ad, setAd] = useState(false), [own, setOwn] = useState(false);
-  const [photos, setPhotos] = useState([]), [photoErr, setPhotoErr] = useState('');
+  const [photos, setPhotos] = useState([]), [photoErr, setPhotoErr] = useState(''), [busy, setBusy] = useState(false);
   if (!u) return <Navigate to={`/login?next=${encodeURIComponent('/review-new?' + sp.toString())}`} replace />;
   if (!pin) return <Navigate to="/home" replace />;
 
   // 작성 제한 (1계정 1핀 1리뷰, 가입 7일 이내 하루 3개)
   let block = null;
-  if (reviews().some(r => r.pin === pin.id && r.by === u.email)) {
+  if (reviews().some(r => r.pin === pin.id && r.by === u.id)) {
     block = ['이 핀에는 이미 리뷰를 남겼어요', '한 장소에는 리뷰를 하나만 쓸 수 있어요.', ['내 리뷰 보기', `/pin?id=${pin.id}`]];
   } else if (isNew(u) && todayCount(u) >= 3) {
     const free = new Date(u.created + 7 * DAY);
     block = ['오늘은 리뷰를 더 쓸 수 없어요', `가입 7일 이내 계정은 하루 3개까지 쓸 수 있어요. 내일 0시부터 다시 쓸 수 있고, ${free.getMonth() + 1}월 ${free.getDate()}일부터는 제한이 풀려요.`];
   }
-  const ok = !block && body.trim() && (!photos.length || own);
-  const submit = () => {
-    const all = [...reviews(), { id: 'r' + uid(), pin: pin.id, by: u.email, body: body.trim(), ad, photos: [...photos], at: Date.now(), reports: [] }];
-    if (!save('reviews', all)) return ui.toast('저장 공간이 부족해요. 사진 수를 줄여 주세요.');
+  const ok = !block && body.trim() && (!photos.length || own) && !busy;
+  // 제한(1핀 1리뷰, 신규 계정 하루 3개)은 서버도 다시 검사해요
+  const submit = async () => {
+    setBusy(true);
+    const urls = await uploadPhotos(photos);
+    const { error } = urls ? await run(supabase.from('reviews').insert({ pin_id: pin.id, body: body.trim(), ad, photos: urls })) : { error: { code: 'photo' } };
+    setBusy(false);
+    if (error) return ui.toast(error.code === 'photo' ? '사진을 올리지 못했어요. 다시 시도해 주세요'
+      : error.code === '23505' ? '이 핀에는 이미 리뷰를 남겼어요' : error.message?.includes('daily_review_limit') ? '오늘은 리뷰를 더 쓸 수 없어요' : '리뷰를 등록하지 못했어요. 다시 시도해 주세요');
     clean();
     // 등록 뒤 AI 광고성 판정은 서버에서 따로 실행되고, 결과는 작성자에게 보이지 않음
     nav(`/pin?id=${pin.id}&toast=${encodeURIComponent('리뷰를 등록했어요')}`);

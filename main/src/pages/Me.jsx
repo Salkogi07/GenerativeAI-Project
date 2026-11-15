@@ -1,7 +1,8 @@
 // 마이페이지: 프로필·활동 수(눌러서 펼치기), 신규 계정 리뷰 제한, 닉네임 수정, 위치 정보 이용, 약관, 로그아웃·탈퇴.
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { DAY, DB, ago, isNew, lists, me, pinKind, pins, reviews, save, todayCount, useStore, users, visibleCount } from '../lib/store.js';
+import { DAY, ago, isNew, lists, me, pinKind, pins, refresh, reviews, run, todayCount, useStore, visibleCount } from '../lib/store.js';
+import { supabase } from '../supabase.js';
 import { Icon, Photo, ReviewLink, Screen, openDoc, ui } from '../ui/kit.jsx';
 
 export default function Me() {
@@ -14,11 +15,10 @@ export default function Me() {
       <Link className="btn fit" to="/login?next=%2Fme">로그인</Link><Link className="text-link" to="/terms">회원가입</Link></div></div>
   </Screen>;
 
-  const updateMe = fn => save('users', users().map(x => (x.email === u.email ? (fn(x), x) : x)));
   const j = new Date(u.created), free = new Date(u.created + 7 * DAY);
-  const myPins = pins().filter(p => p.author === u.email).sort((a, b) => b.created - a.created);
-  const myRvs = reviews().filter(r => r.by === u.email).sort((a, b) => b.at - a.at);
-  const myLists = lists().filter(l => l.owner === u.email).sort((a, b) => b.updated - a.updated);
+  const myPins = pins().filter(p => p.author === u.id).sort((a, b) => b.created - a.created);
+  const myRvs = reviews().filter(r => r.by === u.id).sort((a, b) => b.at - a.at);
+  const myLists = lists().filter(l => l.owner === u.id).sort((a, b) => b.updated - a.updated);
   // 활동 칸을 누르면 페이지 이동 대신 아래로 최근 3개를 펼쳐요. 다시 누르면 접혀요.
   const TILES = [
     ['pin', myPins.length, '찍은 핀', '/mine?tab=pin', '아직 찍은 핀이 없어요', myPins.slice(0, 3).map(p => <Link className="row" key={p.id} to={`/pin?id=${p.id}`}>
@@ -34,17 +34,31 @@ export default function Me() {
   const editNick = async () => {
     const v = await ui.dialog({ title: '닉네임 수정', body: '리뷰와 공개 리스트에 보이는 이름이에요.', ok: '저장',
       input: { value: u.nick, max: 12, validate: x => (/^[가-힣a-zA-Z0-9_]{2,12}$/.test(x) ? '' : '한글·영문·숫자·_ 2~12자로 입력해 주세요') } });
-    if (v) { updateMe(x => { x.nick = v; }); ui.toast('닉네임을 바꿨어요'); }
+    if (!v) return;
+    const { error } = await run(supabase.from('profiles').update({ nick: v }).eq('id', u.id));
+    ui.toast(error ? '닉네임을 바꾸지 못했어요' : '닉네임을 바꿨어요');
   };
-  const pw = async () => { if (await ui.dialog({ title: '비밀번호를 바꿀까요?', body: `${u.email}로 비밀번호 변경 링크를 보내 드려요.`, ok: '메일 보내기' })) ui.toast('비밀번호 변경 메일을 보냈어요'); };
-  const loc = () => { const off = u.location !== false; updateMe(x => { x.location = !off; }); ui.toast(off ? '위치 정보 이용을 껐어요' : '위치 정보 이용을 켰어요'); };
-  const logout = async () => { if (!(await ui.dialog({ title: '로그아웃할까요?', ok: '로그아웃' }))) return; DB.set('session', null); nav('/login'); };
+  // 메일의 링크를 누르면 앱에서 새 비밀번호를 받아요 (main.jsx)
+  const pw = async () => {
+    if (!(await ui.dialog({ title: '비밀번호를 바꿀까요?', body: `${u.email}로 비밀번호 변경 링크를 보내 드려요.`, ok: '메일 보내기' }))) return;
+    const { error } = await supabase.auth.resetPasswordForEmail(u.email, { redirectTo: location.origin + location.pathname });
+    ui.toast(error ? '메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요' : '비밀번호 변경 메일을 보냈어요');
+  };
+  const loc = async () => {
+    const off = u.location;
+    const { error } = await supabase.auth.updateUser({ data: { location: !off } });
+    if (error) return ui.toast('설정을 바꾸지 못했어요');
+    await refresh();
+    ui.toast(off ? '위치 정보 이용을 껐어요' : '위치 정보 이용을 켰어요');
+  };
+  const logout = async () => { if (!(await ui.dialog({ title: '로그아웃할까요?', ok: '로그아웃' }))) return; await supabase.auth.signOut(); await refresh(); nav('/login'); };
   const leave = async () => {
-    if (!(await ui.dialog({ title: '정말 탈퇴할까요?', body: '이메일·닉네임과 내 리스트가 바로 삭제되고 되돌릴 수 없어요.', ok: '탈퇴하기', danger: true }))) return;
-    save('lists', lists().filter(l => l.owner !== u.email));
-    save('users', users().filter(x => x.email !== u.email));
-    DB.set('session', null);
-    nav('/login');
+    if (!(await ui.dialog({ title: '정말 탈퇴할까요?', body: '이메일·닉네임과 내 리스트가 바로 삭제되고 되돌릴 수 없어요. 남긴 핀과 리뷰는 작성자 표시 없이 남아요.', ok: '탈퇴하기', danger: true }))) return;
+    const { error } = await supabase.rpc('delete_me');
+    if (error) return ui.toast('탈퇴하지 못했어요. 다시 시도해 주세요');
+    await supabase.auth.signOut({ scope: 'local' });
+    await refresh();
+    nav('/login?toast=' + encodeURIComponent('탈퇴했어요. 그동안 고마웠어요'));
   };
 
   return <Screen nav="마이페이지" title="마이페이지">
@@ -66,8 +80,8 @@ export default function Me() {
 
       <div className="sec-h">계정</div>
       <button className="row" onClick={pw}><span className="fl t plain">비밀번호 변경</span><span className="chev"><Icon n="chev" cls="sm" /></span></button>
-      <button className="row" role="switch" aria-checked={u.location !== false} onClick={loc}><span className="fl"><span className="t plain">위치 정보 이용</span><span className="s">내 위치로 지도를 옮길 때만 써요</span></span>
-        <span className={`switch ${u.location !== false ? 'on' : ''}`} /></button>
+      <button className="row" role="switch" aria-checked={u.location} onClick={loc}><span className="fl"><span className="t plain">위치 정보 이용</span><span className="s">내 위치로 지도를 옮길 때만 써요</span></span>
+        <span className={`switch ${u.location ? 'on' : ''}`} /></button>
       {/* 메뉴 숨김은 편의, 실제 차단은 RLS */}
       {u.admin && <Link className="row admin-row" to="/admin"><span className="thumb tint md"><Icon n="shield" /></span><span className="fl"><span className="t">리뷰 검토</span><span className="s">운영자 전용</span></span><span className="chev"><Icon n="chev" cls="sm" /></span></Link>}
 
@@ -75,7 +89,7 @@ export default function Me() {
       {[['terms', '서비스 이용약관'], ['privacy', '개인정보 처리방침'], ['review', '리뷰 작성 원칙'], ['data', '장소 데이터 출처']].map(([k, nm]) =>
         <button className="row" key={k} onClick={() => openDoc(k)}><span className="fl t plain">{nm}</span><span className="chev"><Icon n="chev" cls="sm" /></span></button>)}
       <div className="row"><span className="fl t plain">지도 데이터</span><span className="end">© OpenStreetMap contributors</span></div>
-      <div className="row"><span className="fl t plain">버전</span><span className="end num">1.0.0</span></div>
+      <div className="row"><span className="fl t plain">버전</span><span className="end num">0.9.0 베타</span></div>
 
       <div className="pad stack account-actions">
         <button className="btn sec" onClick={logout}>로그아웃</button>

@@ -86,7 +86,7 @@ function Dialog({ title, body = '', ok = '확인', cancel = '취소', danger = f
   return <>
     <div className="dim" onClick={() => close(input ? null : false)} />
     <div className="dialog" role="dialog" aria-modal="true"><h3>{title}</h3>{body && <p>{body}</p>}
-      {input && <><div className="control"><input autoFocus maxLength={input.max || 30} value={v} placeholder={input.placeholder || ''}
+      {input && <><div className="control"><input autoFocus type={input.type || 'text'} maxLength={input.max || 30} value={v} placeholder={input.placeholder || ''}
         onChange={e => setV(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} /></div><div className="hint bad">{err}</div></>}
       <div className="acts">{cancel && <button className="btn sec" onClick={() => close(input ? null : false)}>{cancel}</button>}
         <button className={`btn ${danger ? 'danger' : ''}`} onClick={submit}>{ok}</button></div></div>
@@ -144,8 +144,8 @@ export function useNeedLogin() {
 }
 
 // ---------- 사진 ----------
-// 저장된 사진은 시연용 무늬 클래스(ph-1…) 또는 data URL
-export const Photo = ({ p, alt = '사진', cls = 'photo' }) => p.startsWith('data:')
+// 저장된 사진은 Storage 주소(https) 또는 올리기 전 미리보기(data URL)
+export const Photo = ({ p, alt = '사진', cls = 'photo' }) => /^(https?|data):/.test(p)
   ? <div className={cls}><img src={p} alt={alt} /></div> : <div className={`${cls} ${p}`} role="img" aria-label={alt} />;
 
 export function PhotoPicker({ photos, onAdd, onRemove }) {
@@ -166,10 +166,10 @@ export const AdLabel = ({ r }) => (r.ad || r.adminLabel) ? <span className="ad-l
 
 export function ReviewCard({ r, viewer, onMore }) {
   if (r.hidden) return <div className="rv held" id={`rv-${r.id}`}><Icon n="eyeoff" cls="sm" />신고가 접수돼 검토 중인 리뷰예요.</div>;
-  const nick = nickOf(r.by, r.nick);
+  const nick = nickOf(r.by);
   return <div className="rv" id={`rv-${r.id}`}>
     <div className="who"><span className="avatar">{nick[0].toUpperCase()}</span><span className="nm">{nick}</span>
-      <span className="dt">{fmtDate(r.at)}{viewer?.email === r.by ? ' · 내 리뷰' : ''}</span>
+      <span className="dt">{fmtDate(r.at)}{viewer?.id === r.by ? ' · 내 리뷰' : ''}</span>
       <button className="icon-btn more" aria-label="리뷰 메뉴" onClick={() => onMore(r)}><Icon n="more" /></button></div>
     <AdLabel r={r} />
     <p>{r.body}</p>{r.photos?.length > 0 && <div className="photos">{r.photos.map((p, i) => <Photo key={i} p={p} alt="리뷰 사진" />)}</div>}
@@ -182,7 +182,7 @@ export function ReviewLink({ r }) {
   if (!p) return null;
   return <Link className="frv" to={`/pin?id=${p.id}&at=rv-${r.id}`}>
     <span className="frv-place"><Icon n="pin" cls="sm" /><span className="ell">{p.name}</span></span>
-    <span className="frv-who">{nickOf(r.by, r.nick)} · {ago(r.at)} · {pinKind(p)}</span>
+    <span className="frv-who">{nickOf(r.by)} · {ago(r.at)} · {pinKind(p)}</span>
     <AdLabel r={r} /><span className="frv-body">{r.body}</span>
     {r.photos?.length > 0 && <span className="photos">{r.photos.map((x, i) => <Photo key={i} p={x} alt="리뷰 사진" />)}</span>}
   </Link>;
@@ -195,7 +195,7 @@ const DOCS = {
   review: ['리뷰 작성 원칙', '돈·제품·할인 등 대가를 받고 쓴 리뷰는 반드시 "협찬·대가를 받았어요"를 체크해 주세요. 체크한 리뷰는 본문 위에 협찬·광고 표시가 붙어요.\n표시 없이 쓴 광고 리뷰는 신고나 운영자 검토로 숨겨질 수 있어요. 한 장소에는 리뷰를 하나만 쓸 수 있어요.'],
   location: ['위치 정보 이용', '"내 위치" 버튼을 누를 때만 현재 위치를 확인해 지도를 옮겨요. 위치는 저장하거나 다른 사람에게 보여 주지 않아요.'],
   age: ['만 14세 이상 확인', '만 14세 미만은 보호자 동의 없이 가입할 수 없어요.'],
-  data: ['장소 데이터 출처', '장소 정보는 공공데이터를 정리해서 보여 줘요.\n· 서울특별시 주요 공원현황 (2026 하반기)\n· 서울특별시 관악구 카페및커피숍 현황 (2022)\n· 서울특별시 강서구 카페(커피숍) 현황 (2025.8.5. 기준)\n주소를 좌표로 바꾸는 데 브이월드(국토교통부) 지오코더를 썼어요.'],
+  data: ['장소 데이터 출처', '장소 정보는 공공데이터를 정리해서 보여 줘요.\n· 서울특별시 주요 공원현황 (2026 하반기)\n· 서울특별시 관악구 카페및커피숍 현황 (2022)\n· 서울특별시 강서구 카페(커피숍) 현황 (2025.8.5. 기준)\n주소를 좌표로 바꾸는 데 브이월드(국토교통부) 지오코더를 썼어요.\n전국 장소·지역 검색은 브이월드 검색 API를 써요.'],
 };
 export const openDoc = key => {
   const [t, b] = DOCS[key];

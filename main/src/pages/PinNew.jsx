@@ -1,7 +1,8 @@
 // 핀 찍기: 지도에서 위치 지정, 이름 직접 입력(장소 데이터로 미리 채우지 않음), 근처 장소(Supabase) 연결, 중복·근접 핀 확인.
 import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { CATS, CENTER, addPhotos, dist, fmtDist, me, pins, save, uid } from '../lib/store.js';
+import { CATS, addPhotos, dist, fmtDist, me, pins, region, run, uploadPhotos } from '../lib/store.js';
+import { supabase } from '../supabase.js';
 import { nearPlaces, placeById } from '../lib/places.js';
 import { BackBtn, Icon, PhotoPicker, Screen, clean, ui } from '../ui/kit.jsx';
 import { L, addPins, markerIcon, useMap } from '../ui/map.js';
@@ -15,11 +16,11 @@ export default function PinNew() {
 function PinNewForm({ u, sp }) {
   const nav = useNavigate();
   const placeId = sp.get('place');
-  const start = sp.get('lat') ? [+sp.get('lat'), +sp.get('lng')] : CENTER;
+  const start = sp.get('lat') ? [+sp.get('lat'), +sp.get('lng')] : region().slice(1);
   const [pos, setPos] = useState({ lat: start[0], lng: start[1] });
   const [name, setName] = useState(''), [nameErr, setNameErr] = useState('');
   const [cat, setCat] = useState(''), [link, setLink] = useState(placeId || '');
-  const [near, setNear] = useState([]), [photos, setPhotos] = useState([]), [photoErr, setPhotoErr] = useState(''), [own, setOwn] = useState(false);
+  const [near, setNear] = useState([]), [photos, setPhotos] = useState([]), [photoErr, setPhotoErr] = useState(''), [own, setOwn] = useState(false), [busy, setBusy] = useState(false);
   const [ref, map] = useMap({ center: start, zoom: 17 });
   const mkRef = useRef(null), nameRef = useRef(null);
 
@@ -78,11 +79,15 @@ function PinNewForm({ u, sp }) {
         clean(); return nav(`/pin?id=${close.id}`);
       }
     }
-    const p = { id: 'p' + uid(), name: nm, cat, kind: link ? '장소' : '위치', placeId: link ? Number(link) : undefined,
-      lat: +pos.lat.toFixed(6), lng: +pos.lng.toFixed(6), desc: '', photos: [...photos], author: u.email, created: Date.now() };
-    if (!save('pins', [...all, p])) return ui.toast('저장 공간이 부족해요. 사진 수를 줄여 주세요.');
+    setBusy(true);
+    const urls = await uploadPhotos(photos);
+    const { data, error } = urls ? await run(supabase.from('pins').insert({ name: nm, cat, place_id: link ? Number(link) : null,
+      lat: +pos.lat.toFixed(6), lng: +pos.lng.toFixed(6), photos: urls }).select('id').single()) : { error: { code: 'photo' } };
+    setBusy(false);
+    if (error) return ui.toast(error.code === 'photo' ? '사진을 올리지 못했어요. 다시 시도해 주세요'
+      : error.code === '23505' ? '방금 다른 사람이 이 장소에 핀을 남겼어요. 검색에서 다시 찾아 주세요' : '핀을 저장하지 못했어요. 다시 시도해 주세요');
     clean();
-    nav(`/pin?id=${p.id}&toast=${encodeURIComponent('핀을 남겼어요. 모든 사람의 지도에 보여요')}`);
+    nav(`/pin?id=${data.id}&toast=${encodeURIComponent('핀을 남겼어요. 모든 사람의 지도에 보여요')}`);
   };
 
   const linked = near.find(p => String(p.id) === String(link));
@@ -114,6 +119,6 @@ function PinNewForm({ u, sp }) {
         </div>
       </div>
     </div>
-    <div className="cta"><button className="btn" onClick={submit}>핀 저장</button></div>
+    <div className="cta"><button className="btn" disabled={busy} onClick={submit}>{busy ? '저장 중…' : '핀 저장'}</button></div>
   </Screen>;
 }

@@ -1,7 +1,8 @@
 // 내 활동(핀·리뷰), 내 찜 리스트 목록, 리스트 상세, 공유 리스트.
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { ago, likeCount, lists, me, nickOf, pinById, pinKind, pins, reviews, save, uid, useStore, uuid, visibleCount } from '../lib/store.js';
+import { ago, likeCount, lists, me, nickOf, pinById, pinKind, pins, reviews, run, useStore, visibleCount } from '../lib/store.js';
+import { supabase } from '../supabase.js';
 import { BackBtn, Icon, Photo, ReviewLink, Screen, ui, useNeedLogin } from '../ui/kit.jsx';
 import { addPins, fitTo, useMap } from '../ui/map.js';
 
@@ -11,8 +12,8 @@ export function Mine() {
   const [sp] = useSearchParams(), u = me();
   const [tab, setTab] = useState(sp.get('tab') === 'review' ? 'review' : 'pin');
   if (!u) return <Navigate to="/login?next=%2Fmine" replace />;
-  const myPins = pins().filter(p => p.author === u.email).sort((a, b) => b.created - a.created);
-  const myRvs = reviews().filter(r => r.by === u.email).sort((a, b) => b.at - a.at); // 내 리뷰는 신고로 가려져도 나에게는 보여요
+  const myPins = pins().filter(p => p.author === u.id).sort((a, b) => b.created - a.created);
+  const myRvs = reviews().filter(r => r.by === u.id).sort((a, b) => b.at - a.at); // 내 리뷰는 신고로 가려져도 나에게는 보여요
   return <Screen nav="마이페이지" title="내 활동">
     <div className="top line"><BackBtn to="/me" /><span className="ttl">내 활동</span></div>
     <div className="seg"><button className={tab === 'pin' ? 'on' : ''} onClick={() => setTab('pin')}>내가 찍은 핀<span className="n num">{myPins.length}</span></button>
@@ -38,11 +39,11 @@ export function Lists() {
     const name = await ui.dialog({ title: '새 리스트', body: '처음에는 나만 볼 수 있는 비공개 리스트로 만들어져요.', ok: '만들기',
       input: { placeholder: '예: 성수 카페 투어', max: 20, validate: v => (v ? '' : '리스트 이름을 적어 주세요') } });
     if (!name) return;
-    const l = { id: 'l' + uid(), name, owner: u.email, public: false, token: uuid(), pins: [], updated: Date.now() };
-    save('lists', [...lists(), l]);
-    nav(`/list?id=${l.id}&toast=${encodeURIComponent('리스트를 만들었어요')}`);
+    const { data, error } = await run(supabase.from('lists').insert({ name }).select('id').single());
+    if (error) return ui.toast('리스트를 만들지 못했어요. 다시 시도해 주세요');
+    nav(`/list?id=${data.id}&toast=${encodeURIComponent('리스트를 만들었어요')}`);
   };
-  const mine = u ? lists().filter(l => l.owner === u.email).sort((a, b) => b.updated - a.updated) : [];
+  const mine = u ? lists().filter(l => l.owner === u.id).sort((a, b) => b.updated - a.updated) : [];
   return <Screen nav="마이페이지" title="찜 리스트">
     <div className="top line"><BackBtn to="/me" /><span className="ttl">찜 리스트</span>{u && <button className="icon-btn" aria-label="새 리스트 만들기" onClick={create}><Icon n="plus" /></button>}</div>
     <div className="body">
@@ -77,34 +78,38 @@ export function List() {
   const l = lists().find(x => x.id === id);
   if (!u) return <Navigate to={`/login?next=${encodeURIComponent('/list?id=' + id)}`} replace />;
   if (!l) return <Navigate to="/lists" replace />;
-  if (l.owner !== u.email) return <Navigate to={`/shared?t=${l.token}`} replace />;
-  const update = fn => save('lists', lists().map(x => (x.id === id ? (fn(x), x.updated = Date.now(), x) : x)));
+  if (l.owner !== u.id) return <Navigate to={`/shared?t=${l.token}`} replace />;
+  // patch: { name, is_public, pin_ids } 중 바꿀 것
+  const update = async patch => {
+    const { error } = await run(supabase.from('lists').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id));
+    if (error) ui.toast('저장하지 못했어요. 다시 시도해 주세요');
+    return !error;
+  };
   const ps = l.pins.map(pinById).filter(Boolean);
 
   const togglePub = async () => {
     if (l.public && !(await ui.dialog({ title: '비공개로 바꿀까요?', body: '링크로 보던 사람도 더 이상 볼 수 없고, 리스트 검색에서도 빠져요.', ok: '비공개로 바꾸기' }))) return;
-    update(x => { x.public = !x.public; });
-    ui.toast(!l.public ? '공개 리스트가 됐어요' : '비공개 리스트가 됐어요');
+    if (await update({ is_public: !l.public })) ui.toast(!l.public ? '공개 리스트가 됐어요' : '비공개 리스트가 됐어요');
   };
   const copy = async () => {
     try { await navigator.clipboard.writeText(shareUrl(l)); ui.toast('링크를 복사했어요', { label: '열어 보기', to: `/shared?t=${l.token}` }); }
     catch { await ui.dialog({ title: '공유 링크', body: shareUrl(l), cancel: '' }); }
   };
-  const remove = pid => {
-    const idx = l.pins.indexOf(pid);
-    update(x => { x.pins = x.pins.filter(y => y !== pid); });
-    ui.toast('리스트에서 뺐어요', { label: '되돌리기', fn: () => update(x => { x.pins.splice(idx, 0, pid); }) });
+  const remove = async pid => {
+    const before = l.pins;
+    if (await update({ pin_ids: before.filter(y => y !== pid) })) ui.toast('리스트에서 뺐어요', { label: '되돌리기', fn: () => update({ pin_ids: before }) });
   };
   const menu = () => ui.sheet(close => <div className="menu-sheet">
     <button onClick={async () => {
       close();
       const name = await ui.dialog({ title: '리스트 이름 바꾸기', ok: '저장', input: { value: l.name, max: 20, validate: v => (v ? '' : '리스트 이름을 적어 주세요') } });
-      if (name) { update(x => { x.name = name; }); ui.toast('이름을 바꿨어요'); }
+      if (name && await update({ name })) ui.toast('이름을 바꿨어요');
     }}><Icon n="edit" />이름 바꾸기</button>
     <button className="danger" onClick={async () => {
       close();
       if (!(await ui.dialog({ title: '리스트를 삭제할까요?', body: '담긴 핀은 지워지지 않지만, 공유 링크는 더 이상 열리지 않아요.', ok: '삭제', danger: true }))) return;
-      save('lists', lists().filter(x => x.id !== id));
+      const { error } = await run(supabase.from('lists').delete().eq('id', id));
+      if (error) return ui.toast('삭제하지 못했어요. 다시 시도해 주세요');
       nav('/lists?toast=' + encodeURIComponent('리스트를 삭제했어요'));
     }}><Icon n="trash" />리스트 삭제</button>
     <button onClick={close}><Icon n="close" />닫기</button></div>);

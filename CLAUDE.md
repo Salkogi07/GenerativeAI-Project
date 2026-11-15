@@ -4,22 +4,55 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-**Pin it!** is a mobile web prototype for finding and sharing location pins and wishlists, with reviews that show whether they are ads. The repo has planning documents (`docs/`) and a browser-only HTML prototype (`docs/prototype/`). The real React/Supabase app is in `main/`, a Vite + React project (`cd main && npm install && npm run dev`, then http://localhost:5173). It is a React port of every prototype screen, with the prototype CSS copied as-is (`src/styles/common.css`, `src/styles/pages/*.css`, plus `src/styles/app.css`). Routes use HashRouter (`#/pin?id=p1`); `src/main.jsx` lists them. Shared UI lives in `src/ui/kit.jsx` (icons, `Screen` with tab bar and leave-guard, `ui.toast/dialog/sheet`, review cards, docs) and `src/ui/map.js` (Leaflet + OSM). Places come from Supabase (`src/lib/places.js`: search, within 300 m, by id). Accounts, pins, reviews and lists are still demo data in localStorage (`src/lib/store.js`, same seed and keys as the prototype). Move them to Supabase one at a time: accounts, then pins, reviews, lists. The Supabase URL and publishable/anon key go in `main/.env.local` as `VITE_SUPABASE_URL` / `VITE_SUPABASE_KEY` (template: `.env.example`, git-ignored). Never put the service_role/secret key there. The root `index.html` only redirects (meta refresh) to the prototype's `index.html`, and GitHub Pages serves it at https://salkogi07.github.io/GenerativeAI-Project/.
+**Pin it!** is a mobile web prototype for finding and sharing location pins and wishlists, with reviews that show whether they are ads. The repo has planning documents (`docs/`) and a browser-only HTML prototype (`docs/prototype/`). The real React/Supabase app is in `main/` (see [Main app](#main-app-main)). The root `index.html` only redirects (meta refresh) to the prototype's `index.html`, and GitHub Pages serves it at https://salkogi07.github.io/GenerativeAI-Project/.
 
 The source of truth is [docs/prd/Pin it! PRD v0.2.pdf](docs/prd/), which updates v0.1 (확정본) to match wireframes v0.1–v0.3; its section 7-5 lists decisions still open. Read it before you design or build anything. When the 기획서 (proposal) and the 실습 (lab) disagree, the PRD follows 실습 2·3.
 
-## Planned stack (from the PRD, not built yet)
+## Stack
 
 - **Front end:** React + Vite.
 - **Map:** Leaflet + OpenStreetMap standard tiles (no key). The user tried Naver Maps and dropped it (NCP needs a payment method and a 대표 계정 for the free quota), so don't bring Naver or Kakao back without asking. OSM tiles need a Referer (serve over http(s), not `file://`) and the © OpenStreetMap contributors attribution. The prototype still uses Leaflet with no tiles.
 - **Back end:** Supabase (Auth with email confirmation, Postgres + RLS, Storage, Edge Functions).
-- **Places (user's decision, replaces the PRD's Kakao Local API):** public open data, cleaned and stored in the Supabase `places` table (`supabase/migrations/`). Anyone can read it; writes happen only through the SQL editor or service_role (RLS has no write policy).
+- **Places (user's decision, replaces the PRD's Kakao Local API):** public open data, cleaned and stored in the Supabase `places` table (`supabase/migrations/`), plus nationwide 브이월드 search results saved when someone pins one (`save_place` RPC, logged-in users only, source `vworld`). Anyone can read the table; there is no write policy.
+  - **Nationwide search:** the browser calls the 브이월드 search API by JSONP (`geoSearch` in `src/lib/places.js`; `place` = POIs, `district` = 행정구역, tried L1 → L2 → L4). 브이월드 sends no CORS headers and blocks foreign IPs, so calling it from Supabase (Sydney) times out; don't move it server-side. The key is `VITE_VWORLD_KEY` and is visible in the page (user accepted this for the low-traffic beta).
   - Pipeline: put the raw JSON exports in `data/raw/`, run `python scripts/build_places.py` (check with `--selftest`), then paste `supabase/seed.sql` into the Supabase SQL editor. Outputs: `data/places.json`, `supabase/seed.sql`, and the geocode cache `data/geocode_cache.json`.
   - Current sources: 서울시 주요 공원현황 (has coordinates, but about 9 rows have lat/lng swapped, some are strings like `127.13°` or multi-line, a few are null; the script fixes or skips them), 관악구 카페 현황 (2022; filter by 위생업태 커피숍/까페) and 강서구 카페 현황 (2025.8). The cafe files have no coordinates, so the script geocodes road addresses with the 브이월드 geocoder (`VWORLD_KEY` env). Nominatim was tested and could not find Korean road addresses.
   - Each dataset's 공공누리 license must allow this use, and the app must show the source attribution.
 - **AI ad-review detection:** Gemini API, called from an Edge Function. Results are written to `review_ai_checks`, which only admins can read.
 
-Product rules that every screen and table must follow:
+## Main app (`main/`)
+
+A React port of every prototype screen. It must look and behave like the prototype, so port changes in both places or ask which one wins.
+
+```sh
+cd main
+npm install
+npm run dev       # http://localhost:5173
+npm run build     # the only automated check; there is no lint or test runner
+npm run preview   # serves dist/ on :4173 for headless-Chrome checks
+```
+
+- **Env:** `main/.env.local` holds `VITE_SUPABASE_URL`, `VITE_SUPABASE_KEY` (the publishable key) and `VITE_VWORLD_KEY`. Anything prefixed `VITE_` is bundled into the browser, so never put the DB URL or the service_role/secret key there.
+- **Root `.env.local`** (git-ignored) holds the secrets used only by local scripts: `SUPABASE_DB_URL` (Session pooler URL) and `VWORLD_KEY`. Never print them. The DB password in that URL contains a percent-encoded character, so pass `decodeURIComponent(password)` as a separate field to `pg` instead of using the URL string. There is no psql or Supabase CLI here; run SQL through the Supabase SQL editor or a throwaway `pg` script.
+- **Routing:** `HashRouter` in `src/main.jsx` (`#/pin?id=p1`), so it works on static hosting. Prototype file names map to routes (`pin.html?id=` → `/pin?id=`). Prototype `#rv-…`/`#reviews-h` anchors became `&at=rv-…`/`&at=reviews-h`.
+- **Styles:** the prototype CSS is copied verbatim into `src/styles/`. `src/styles/index.css` `@import`s them in order: `common.css`, then `pages/*.css`, then `app.css`. Keep that order, because page CSS must override common CSS (when the order broke, the home preview card rendered centered and clipped). Add new page CSS files to that list.
+- **Data (beta, real):** `src/lib/store.js` loads everything from Supabase into memory at startup (`main.jsx` awaits `refresh()` before rendering) and after every auth change. Pages read with plain functions (`pins()`, `me()`, `nickOf(id)`) during render and call `useStore()` to re-render. Writes go through `run(supabase.from(...)...)`, which reloads everything on success and returns `{data, error}`. Users are identified by Supabase user id (`me().id`, `pin.author`, `review.by`, `list.owner`), never by email. `DB` (localStorage `pinit.*`) only keeps per-device prefs: recent searches and the chosen region (`region()` → `[name, lat, lng]`).
+  - Schema and rules: `supabase/migrations/20261115000000_beta.sql` (profiles, pins, reviews, reports, lists, review_ai_checks, `photos` bucket). Limits are enforced server-side: column grants stop users from setting `hidden`/`admin_label`, triggers apply the 3-report auto-hide and the new-account 3-reviews-a-day limit (`daily_review_limit`), `unique(pin_id, author)` and `unique(place_id)`. `like_counts()` and `delete_me()` are security-definer RPCs.
+  - Photos are shrunk to 1280px JPEG in the browser (strips EXIF), then uploaded to `photos/<user id>/` by `uploadPhotos`. A check constraint only allows URLs from this project's bucket.
+  - Auth: email + password with email confirmation, PKCE flow (links come back as `?code=`, which doesn't clash with HashRouter). The default Supabase mailer sends only to org team members, about 2 mails an hour. Real beta signups need custom SMTP.
+  - Applying SQL: root `.env.local` `SUPABASE_DB_URL` with a throwaway `pg` script, only after the user OKs that change.
+- **Places:** `src/lib/places.js` queries Supabase (`searchPlaces`, `nearPlaces` within 300 m, `placeById`) and 브이월드 (`geoSearch`, `savePlace`). Place IDs are bigints; pins store them as `placeId`.
+- **Shared UI** (`src/ui/kit.jsx`):
+  - `Screen nav="홈|피드|마이페이지" guard title` renders `.phone > .scr`, the tab bar and the overlays. With `guard`, typing marks the page dirty; `BackBtn` and the tabs then ask before leaving. Call `clean()` before navigating after a save.
+  - `ui.toast(msg, {label, to | fn})`, `await ui.dialog({...})` (resolves true/false, or the text when `input` is set) and `ui.sheet(close => <jsx/>)` replace the prototype's `toast`/`dialog`/`sheet`.
+  - `?toast=` in a route shows a toast once and is then removed from the URL.
+  - `useNeedLogin()` returns `needLogin(next)`, which sends you to `/login?next=…`.
+- **Map:** `src/ui/map.js`. `const [ref, map] = useMap({center, zoom, interactive})` creates the map once. Add markers in an effect that depends on `map` and remove them in the cleanup. Call `map.invalidateSize()` after showing a map that was hidden.
+- **Checking a change:** `npm run build`, then `npm run preview` and screenshot routes with headless Chrome: `chrome --headless --screenshot=out.png --window-size=500,900 "http://localhost:4173/#/home"`. For click-through checks, install `puppeteer-core` in the scratchpad (not in `main/`) and point it at the system Chrome.
+
+## Product rules
+
+Every screen and table must follow these rules:
 
 - **Pins and places:** a pin may link to a row in `places` (pin kind 장소) or stand alone (위치 핀). One pin per place; the 30 m rule catches the rest. Pin names come from user input, so never prefill the name field from place data.
 - **Ad label:** the 협찬·광고 label sits above the review body, in larger text and a different color. It shows only for the author's own checkbox or an admin's decision. Users never see AI verdicts.

@@ -1,17 +1,19 @@
-// 핀 설명 수정: 핀을 만든 사람만 (실서비스는 RLS로 서버에서 거부).
+// 핀 설명 수정: 핀을 만든 사람만 (서버는 RLS로 거부).
 import { useState } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { me, pinById, pins, save } from '../lib/store.js';
-import { BackBtn, Screen, clean } from '../ui/kit.jsx';
+import { me, pinById, run } from '../lib/store.js';
+import { supabase } from '../supabase.js';
+import { BackBtn, Screen, clean, ui } from '../ui/kit.jsx';
 
 export default function PinEdit() {
   const [sp] = useSearchParams(), nav = useNavigate(), u = me(), pin = pinById(sp.get('id'));
   const [desc, setDesc] = useState(pin?.desc || '');
   if (!u) return <Navigate to={`/login?next=${encodeURIComponent('/pin-edit?' + sp.toString())}`} replace />;
   if (!pin) return <Navigate to="/home" replace />;
-  if (pin.author !== u.email) return <Navigate to={`/pin?id=${pin.id}&toast=${encodeURIComponent('핀을 만든 사람만 설명을 고칠 수 있어요')}`} replace />;
-  const submit = () => {
-    save('pins', pins().map(p => (p.id === pin.id ? { ...p, desc: desc.trim() } : p)));
+  if (pin.author !== u.id) return <Navigate to={`/pin?id=${pin.id}&toast=${encodeURIComponent('핀을 만든 사람만 설명을 고칠 수 있어요')}`} replace />;
+  const submit = async () => {
+    const { error } = await run(supabase.from('pins').update({ description: desc.trim() }).eq('id', pin.id));
+    if (error) return ui.toast('저장하지 못했어요. 다시 시도해 주세요');
     clean();
     nav(`/pin?id=${pin.id}&toast=${encodeURIComponent('설명을 저장했어요')}`);
   };

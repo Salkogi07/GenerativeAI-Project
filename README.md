@@ -140,11 +140,14 @@
    ```
    VITE_SUPABASE_URL=https://<프로젝트 ID>.supabase.co
    VITE_SUPABASE_KEY=sb_publishable_...
+   VITE_VWORLD_KEY=<브이월드 인증키>
    ```
 
    - publishable 키는 브라우저에 공개돼도 되는 키예요. **secret(service_role) 키와 DB 비밀번호는 절대 넣지 마세요.**
+   - 브이월드 키는 전국 장소·지역 검색에 써요. 브라우저에서 불러서 페이지에 보여요(브이월드는 해외 서버 접속을 막아서 Supabase 서버에서 부를 수 없어요).
    - `.env.local`은 git에 올라가지 않아요.
-2. 아래 명령을 실행하고 <http://localhost:5173> 을 열어요.
+2. 처음 한 번, Supabase SQL 편집기에서 `supabase/migrations/`의 SQL을 날짜 순서대로 실행해요. 그리고 대시보드 **Authentication → URL Configuration**에서 Site URL을 `http://localhost:5173`으로, Redirect URLs에 `http://localhost:5173/**`를 넣어요(인증 메일 링크가 돌아올 주소).
+3. 아래 명령을 실행하고 <http://localhost:5173> 을 열어요.
 
    ```sh
    cd main
@@ -152,15 +155,13 @@
    npm run dev
    ```
 
-**메인 앱에서 진짜인 것과 아직 시연용인 것**
+**메인 앱 베타에서 되는 것**
 
-| 진짜 | 아직 시연용 (브라우저에만 저장, 프로토타입과 같음) |
-|---|---|
-| 지도: OpenStreetMap | 로그인·회원가입 (누르면 바로 로그인) |
-| 장소 검색, 핀 찍기의 "근처 장소 연결": Supabase의 공공데이터 장소 | 핀·리뷰·찜 리스트 |
-| | AI 광고 판정 (예시 데이터) |
-
-시연용 기능은 로그인 → 핀 → 리뷰 → 리스트 순서로 Supabase로 옮길 예정이에요.
+- 회원: 이메일·비밀번호 가입, 이메일 인증, 로그인, 비밀번호 재설정, 로그아웃, 탈퇴 (Supabase Auth)
+- 핀·리뷰·신고·찜 리스트·사진이 모두 Supabase에 저장돼요. 1핀 1리뷰, 신고 3건 자동 숨김, 신규 계정 하루 리뷰 3개 같은 규칙은 서버(RLS·트리거)에서도 막아요.
+- 전국 지역 선택과 장소 검색(브이월드), 지도는 OpenStreetMap
+- 운영자 리뷰 검토: 계정의 `app_metadata.role`이 `admin`이면 열려요. AI 광고 판정(Edge Function)은 아직 없어서 AI 대기열은 비어 있어요.
+- 주의: Supabase 기본 메일은 프로젝트 팀원 주소로만, 시간당 약 2통만 보내요. 다른 사람도 가입하려면 대시보드에서 외부 SMTP를 설정해야 해요.
 
 ## 장소 데이터 (공공데이터)
 
@@ -187,7 +188,7 @@ index.html          프로토타입 지도 홈으로 이동
 main/               메인 앱 (React + Vite + Supabase)
 ├─ src/pages/       화면 (프로토타입 화면과 1:1)
 ├─ src/ui/          공통 UI · 지도
-├─ src/lib/         시연 데이터 저장소 · 장소(Supabase) 조회
+├─ src/lib/         데이터 저장소(Supabase) · 장소 조회·전국 검색
 └─ src/styles/      프로토타입 CSS 그대로 + main 전용
 supabase/           places 테이블 SQL(migrations) · 장소 데이터(seed.sql)
 scripts/            build_places.py (공공데이터 → 장소 데이터)
