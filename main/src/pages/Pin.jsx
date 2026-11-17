@@ -1,9 +1,9 @@
 // 핀 상세: 정보·설명, 리뷰 목록(협찬·광고 라벨, 신고 숨김), 리뷰 메뉴 → 신고 시트, 찜하기 시트.
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { likeCount, lists, me, nickOf, pinById, pinReviews, refresh, reviews, run, useStore } from '../lib/store.js';
+import { catIcon, likeCount, lists, me, nickOf, pinById, pinReviews, refresh, reviews, run, useStore } from '../lib/store.js';
 import { supabase } from '../supabase.js';
-import { BackBtn, Icon, Photo, ReviewCard, Screen, ui, useNeedLogin } from '../ui/kit.jsx';
+import { AdLabel, BackBtn, Icon, MapGrip, Photo, ReviewCard, Screen, ui, useNeedLogin } from '../ui/kit.jsx';
 import { L, markerIcon, useMap } from '../ui/map.js';
 
 const REASONS = ['광고인데 표시가 없어요', '허위 정보예요', '욕설·비방이 있어요', '기타'];
@@ -56,13 +56,14 @@ export default function Pin() {
     <div className="body">
       <PinMap pin={pin} />
       <div className="pad pin-info">
-        <div className="pin-tags"><span className="tag">{pin.kind === '위치' ? '위치 핀' : '장소'}</span><span className="tag">{pin.cat}</span></div>
+        <div className="pin-tags"><span className="tag">{pin.kind === '위치' ? '위치 핀' : '장소'}</span><span className="tag">{catIcon(pin.cat)} {pin.cat}</span></div>
         <h1 className="pin-name">{pin.name}</h1>
         <div className="pin-meta"><span>{nickOf(pin.author)} 님의 핀</span>
-          {pin.kind === '장소' && <><span>·</span><a className="text-link" target="_blank" rel="noopener"
-            href={`https://www.openstreetmap.org/?mlat=${pin.lat}&mlon=${pin.lng}#map=18/${pin.lat}/${pin.lng}`}>지도에서 크게 보기</a></>}</div>
+          <span>·</span><a className="text-link" target="_blank" rel="noopener"
+            href={`https://map.naver.com/p/directions/-/${pin.lng},${pin.lat},${encodeURIComponent(pin.name)},,/-/transit`}>길찾기</a></div>
+        <AdLabel r={pin} />
         <p className={`pin-desc ${pin.desc ? '' : 'is-empty'}`}>{pin.desc || (isMine ? '아직 설명이 없어요. 이 장소를 어떻게 쓰면 좋은지 적어 보세요.' : '아직 설명이 없어요.')}</p>
-        {pin.photos?.length > 0 && <div className="photos">{pin.photos.map((p, i) => <Photo key={i} p={p} alt={`${pin.name} 사진`} />)}</div>}
+        {pin.photos?.length > 0 && <div className="photos">{pin.photos.map((p, i) => <Photo key={i} p={p} alt={`${pin.name} 사진`} zoom={pin.photos} />)}</div>}
         {isMine && <Link className="btn sm line pin-edit" to={`/pin-edit?id=${pin.id}`}><Icon n="edit" cls="sm" />핀 수정</Link>}
       </div>
       <div className="divider" />
@@ -91,7 +92,7 @@ function PinMap({ pin }) {
     const mk = L.marker([pin.lat, pin.lng], { icon: markerIcon(pin, 'sel') }).addTo(map);
     return () => mk.remove();
   }, [map]);
-  return <div className="map h150" ref={ref} />;
+  return <><div className="map h150" ref={ref} /><MapGrip mapRef={ref} map={map} /></>;
 }
 
 function ReportSheet({ rid, close }) {

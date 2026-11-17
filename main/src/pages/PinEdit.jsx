@@ -1,14 +1,14 @@
 // 핀 수정·삭제: 핀을 만든 사람만 (서버는 RLS로 거부). 다른 사람 리뷰가 달린 핀은 지울 수 없어요.
 import { useState } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { CATS, me, pinById, reviews, run } from '../lib/store.js';
+import { cats, me, pinById, reviews, run } from '../lib/store.js';
 import { supabase } from '../supabase.js';
 import { log } from '../lib/log.js';
-import { BackBtn, Screen, clean, ui } from '../ui/kit.jsx';
+import { BackBtn, Icon, Screen, clean, markDirty, ui } from '../ui/kit.jsx';
 
 export default function PinEdit() {
   const [sp] = useSearchParams(), nav = useNavigate(), u = me(), pin = pinById(sp.get('id'));
-  const [name, setName] = useState(pin?.name || ''), [cat, setCat] = useState(pin?.cat || ''), [desc, setDesc] = useState(pin?.desc || '');
+  const [name, setName] = useState(pin?.name || ''), [cat, setCat] = useState(pin?.cat || ''), [desc, setDesc] = useState(pin?.desc || ''), [ad, setAd] = useState(!!pin?.ad);
   const [nameErr, setNameErr] = useState(''), [busy, setBusy] = useState(false);
   if (!u) return <Navigate to={`/login?next=${encodeURIComponent('/pin-edit?' + sp.toString())}`} replace />;
   if (!pin) return <Navigate to="/home" replace />;
@@ -18,11 +18,13 @@ export default function PinEdit() {
     const nm = name.trim();
     if (!nm) return setNameErr('핀 이름을 적어 주세요.');
     setBusy(true);
-    const { error } = await run(supabase.from('pins').update({ name: nm, cat, description: desc.trim() }).eq('id', pin.id));
+    const { error } = await run(supabase.from('pins').update({ name: nm, cat, ad, description: desc.trim() }).eq('id', pin.id));
     setBusy(false);
     if (error) { log('pin.update', error); return ui.toast('저장하지 못했어요. 다시 시도해 주세요'); }
     clean();
-    nav(`/pin?id=${pin.id}&toast=${encodeURIComponent('핀을 수정했어요')}`);
+    // 저장 뒤 뒤로 가기가 이 화면으로 돌아오지 않게: 핀 화면에서 왔으면 그리로 돌아가고, 아니면 이 화면을 핀으로 바꿔요
+    if (window.history.state?.idx > 0) { nav(-1); setTimeout(() => ui.toast('핀을 수정했어요'), 60); }
+    else nav(`/pin?id=${pin.id}&toast=${encodeURIComponent('핀을 수정했어요')}`, { replace: true });
   };
 
   const remove = async () => {
@@ -45,11 +47,15 @@ export default function PinEdit() {
           onChange={e => { setName(e.target.value); setNameErr(''); }} /><span className="aside num">{name.length}/30</span></div>
         <div className="hint bad">{nameErr}</div></div>
       <div className="field"><span className="label">카테고리</span>
-        <div className="chips wrap">{CATS.map(c => <button key={c} className={`chip ${cat === c ? 'on' : ''}`} onClick={() => setCat(c)}>{c}</button>)}</div></div>
+        <div className="chips wrap">{cats().map(({ name: c, icon }) => <button key={c} className={`chip ${cat === c ? 'on' : ''}`} onClick={() => setCat(c)}>{icon} {c}</button>)}</div></div>
       <div className="field"><label htmlFor="desc">설명</label>
         <div className="control area"><textarea id="desc" rows={7} maxLength={500} placeholder="이 장소를 어떻게 쓰면 좋은지 적어 주세요. 예: 콘센트 자리, 붐비는 시간"
           value={desc} onChange={e => setDesc(e.target.value)} /></div>
         <div className="count num">{desc.length} / 500</div></div>
+        <label className="check boxed ad-check">
+          <input type="checkbox" checked={ad} onChange={e => { setAd(e.target.checked); markDirty(); }} /><span className="box"><Icon n="check" /></span>
+          <span className="fl"><b>협찬·대가를 받았어요</b><span className="note">돈·제품·할인을 받고 남기는 핀이라면 꼭 체크해 주세요. 핀 설명 위에 표시가 붙어요.</span>
+            {ad && <span className="ad-preview"><span className="ad-label">협찬·광고</span></span>}</span></label>
       <button type="button" className="text-link danger-link" disabled={busy} onClick={remove}>핀 지우기</button>
     </div>
     <div className="cta"><button className="btn" disabled={busy} onClick={submit}>{busy ? '저장 중…' : '저장'}</button></div>

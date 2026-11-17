@@ -1,5 +1,23 @@
 /* main(React)에서만 필요한 것. 나머지 디자인은 프로토타입 CSS(common.css, pages/*.css)를 그대로 써요. */
 .contents{display:contents}
-/* 실제 지도(OSM)를 띄우니 프로토타입의 격자 배경 대신 타일이 보여요. 저작권 표시는 작게. */
+/* 실제 지도(브이월드)를 띄우니 프로토타입의 격자 배경 대신 타일이 보여요. 저작권 표시는 작게. */
 .leaflet-container{background-image:none}
 .map .leaflet-control-attribution a{color:var(--sub)}
+/* 사진 크게 보기 */
+.zoomable{padding:0;cursor:zoom-in}
+.viewer{position:absolute;inset:0;z-index:960;background:#000;animation:fade .15s}
+.viewer-strip{display:flex;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.viewer-strip img{flex:none;width:100%;height:100%;object-fit:contain;scroll-snap-align:center}
+.viewer-x{position:absolute;top:10px;right:10px;color:#fff;background:rgba(0,0,0,.4);border-radius:50%}
+/* 핀: 내 핀은 브랜드 색, 다른 사람 핀은 짙은 회색. 줌에 따라 크기(--mk, map.js) */
+.mkw{display:block;width:28px;height:28px;transform:scale(var(--mk,1));transform-origin:14px 34px;transition:transform .15s}
+.mk{background:#5f6672}
+.mk.mine{background:var(--brand)}
+/* 지도 아래 손잡이 (MapGrip): 끌어서 지도 높이 조절 */
+.map-grip{height:18px;flex:none;display:flex;align-items:center;justify-content:center;cursor:ns-resize;touch-action:none;background:var(--bg);border-bottom:1px solid var(--line)}
+.map-grip span{width:40px;height:4px;border-radius:2px;background:#c9cdd5}
+/* 카테고리 아이콘이 있는 핀: 흰 점 대신 아이콘을 똑바로 세워요 */
+.mk.ic::after{display:none}
+.mk i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transform:rotate(45deg);font-style:normal;font-size:13px;line-height:1}
+/* "직접 찍은 사진이에요" 뒤 "필수"와 간격 */
+.own-check .req{margin-left:6px}

@@ -113,7 +113,7 @@ export default function Me() {
       <div className="sec-h">정보</div>
       {[['terms', '서비스 이용약관'], ['privacy', '개인정보 처리방침'], ['review', '리뷰 작성 원칙'], ['data', '장소 데이터 출처']].map(([k, nm]) =>
         <button className="row" key={k} onClick={() => openDoc(k)}><span className="fl t plain">{nm}</span><span className="chev"><Icon n="chev" cls="sm" /></span></button>)}
-      <div className="row"><span className="fl t plain">지도 데이터</span><span className="end">© OpenStreetMap contributors</span></div>
+      <div className="row"><span className="fl t plain">지도 데이터</span><span className="end">브이월드(국토교통부)</span></div>
       <div className="row"><span className="fl t plain">버전</span><span className="end num">0.9.0 베타</span></div>
 
       <div className="pad stack account-actions">

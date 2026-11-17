@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { DB, dist, fmtDist, likeCount, lists, me, nickOf, pinKind, pins, region, useStore, visibleCount } from '../lib/store.js';
 import { geoSearch, savePlace, searchPlaces } from '../lib/places.js';
-import { BackBtn, Icon, Screen, ui, useNeedLogin } from '../ui/kit.jsx';
+import { BackBtn, Icon, MapGrip, Screen, ui, useNeedLogin } from '../ui/kit.jsx';
 import { addPins, fitTo, useMap } from '../ui/map.js';
 
 const DEFAULT_RECENT = [];
@@ -123,5 +123,5 @@ function ResultMap({ pins: ps, places, visible, onPin, onPlace }) {
     return () => mks.forEach(m => m.remove());
   }, [map, ps.length, places]);
   useEffect(() => { if (visible) setTimeout(() => map?.invalidateSize(), 0); }, [visible, map]);
-  return <div className="map h200" ref={ref} />;
+  return <><div className="map h200" ref={ref} /><MapGrip mapRef={ref} map={map} /></>;
 }

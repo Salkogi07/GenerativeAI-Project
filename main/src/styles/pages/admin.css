@@ -14,3 +14,5 @@
 .report-line span{color:var(--sub)}
 .decide{display:flex;gap:6px}
 .decide .btn{flex:1}
+.cat-row{gap:8px}
+.cat-ic{width:40px;height:40px;border-radius:10px;background:var(--surface);font-size:20px;flex:none}

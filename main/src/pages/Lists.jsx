@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { ago, likeCount, lists, me, nickOf, pinById, pinKind, pins, reviews, run, useStore, visibleCount } from '../lib/store.js';
 import { supabase } from '../supabase.js';
-import { BackBtn, Icon, Photo, ReviewLink, Screen, ui, useNeedLogin } from '../ui/kit.jsx';
+import { BackBtn, Icon, MapGrip, Photo, ReviewLink, Screen, ui, useNeedLogin } from '../ui/kit.jsx';
 import { addPins, fitTo, useMap } from '../ui/map.js';
 
 // ---------- 내 활동: 내가 찍은 핀, 내가 쓴 리뷰 (최신순) ----------
@@ -67,7 +67,7 @@ function PinsMap({ ps, cls }) {
     setTimeout(() => { map.invalidateSize(); fitTo(map, ps); }, 0);
     return () => mks.forEach(m => m.remove());
   }, [map, ps.map(p => p.id).join()]);
-  return <div className={`map ${cls}`} ref={ref} hidden={!ps.length} />;
+  return <><div className={`map ${cls}`} ref={ref} hidden={!ps.length} />{ps.length > 0 && <MapGrip mapRef={ref} map={map} />}</>;
 }
 
 // ---------- 리스트 상세: 공개·비공개 전환, 공유 링크(무작위 토큰), 핀 빼기(되돌리기), 이름 변경·삭제 ----------

@@ -27,7 +27,6 @@ export const DB = {
 };
 
 export const CENTER = [37.5436, 127.0518];
-export const CATS = ['카페', '맛집', '전시', '산책', '기타'];
 // 지역 화면의 바로가기. 다른 곳은 검색(브이월드)으로 찾아요.
 export const REGIONS = [['성수동', ...CENTER], ['연남동', 37.5662, 126.9235], ['을지로', 37.5663, 126.9910], ['해운대', 35.1631, 129.1636],
   ['전주 한옥마을', 35.8151, 127.1530], ['경주 황리단길', 35.8380, 129.2099], ['강릉', 37.7519, 128.8761], ['제주시', 33.4996, 126.5312]];
@@ -35,14 +34,14 @@ export const REGIONS = [['성수동', ...CENTER], ['연남동', 37.5662, 126.923
 export const region = () => { const r = DB.get('region', null); return Array.isArray(r) && r.length === 3 ? r : REGIONS[0]; };
 
 // ---------- 서버 데이터 ----------
-let S = { user: null, pins: [], reviews: [], lists: [], nick: new Map(), likes: new Map(), ai: [], ready: false };
+let S = { user: null, pins: [], reviews: [], lists: [], cats: [], nick: new Map(), likes: new Map(), ai: [], ready: false };
 const t = s => Date.parse(s);
 
 export async function refresh() {
   if (!supabase) { S.ready = true; return changed(); }
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user || null, admin = user?.app_metadata?.role === 'admin';
-  const [p, r, l, pr, lk, rp, ai] = await Promise.all([
+  const [p, r, l, pr, lk, rp, ai, ct] = await Promise.all([
     supabase.from('pins').select('*'),
     supabase.from('reviews').select('*'),
     supabase.from('lists').select('*'),
@@ -50,8 +49,9 @@ export async function refresh() {
     supabase.rpc('like_counts'),
     user ? supabase.from('reports').select('review_id,reporter,reason') : { data: [] },
     admin ? supabase.from('review_ai_checks').select('*') : { data: [] },
+    supabase.from('categories').select('name,icon').order('sort').order('name'),
   ]);
-  const err = [p, r, l, pr, lk, rp, ai].find(x => x.error)?.error;
+  const err = [p, r, l, pr, lk, rp, ai, ct].find(x => x.error)?.error;
   if (err) throw err;
   const reps = rp.data;
   S = {
@@ -59,12 +59,13 @@ export async function refresh() {
     nick: new Map(pr.data.map(x => [x.id, x])),
     likes: new Map(lk.data.map(x => [x.pin_id, Number(x.n)])),
     pins: p.data.map(x => ({ id: x.id, name: x.name, cat: x.cat, kind: x.place_id ? '장소' : '위치', placeId: x.place_id, lat: x.lat, lng: x.lng,
-      desc: x.description, photos: x.photos, author: x.author, created: t(x.created_at) })),
+      desc: x.description, photos: x.photos, ad: x.ad, author: x.author, created: t(x.created_at) })),
     reviews: r.data.map(x => ({ id: x.id, pin: x.pin_id, by: x.author, body: x.body, ad: x.ad, photos: x.photos, hidden: x.hidden,
       adminLabel: x.admin_label, decision: x.admin_decision, reportCount: x.report_count, at: t(x.created_at),
       reports: reps.filter(y => y.review_id === x.id).map(y => ({ by: y.reporter, reason: y.reason })) })),
     lists: l.data.map(x => ({ id: x.id, name: x.name, owner: x.owner, public: x.is_public, token: x.share_token, pins: x.pin_ids, updated: t(x.updated_at) })),
     ai: ai.data,
+    cats: ct.data,
     user: user && { id: user.id, email: user.email, nick: '', created: t(user.created_at), location: user.user_metadata?.location !== false, admin },
   };
   if (S.user) Object.assign(S.user, { nick: S.nick.get(user.id)?.nick || '', avatar: S.nick.get(user.id)?.avatar || null });
@@ -83,6 +84,9 @@ export const pins = () => S.pins;
 export const reviews = () => S.reviews;
 export const lists = () => S.lists;
 export const aiChecks = () => S.ai;
+// 카테고리 [{name, icon}] — 운영자가 관리해요 (categories 테이블)
+export const cats = () => S.cats;
+export const catIcon = name => S.cats.find(c => c.name === name)?.icon || '';
 export const me = () => S.user;
 export const pinById = id => S.pins.find(p => p.id === id);
 export const nickOf = id => S.nick.get(id)?.nick || '알 수 없음';

@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 출력 언어
+
+- 사용자에게 보내는 모든 답변(진행 상황, 질문, 결과 정리)은 한국어로 작성해요.
+- 코드, 명령어, 파일 경로, 식별자는 원래대로 두고, 설명만 한국어로 써요.
+
 ## Project state
 
 **Pin it!** is a mobile web prototype for finding and sharing location pins and wishlists, with reviews that show whether they are ads. The repo has planning documents (`docs/`) and a browser-only HTML prototype (`docs/prototype/`). The real React/Supabase app is in `main/` (see [Main app](#main-app-main)). The root `index.html` only redirects (meta refresh) to the prototype's `index.html`, and GitHub Pages serves it at https://salkogi07.github.io/GenerativeAI-Project/.
@@ -11,7 +16,7 @@ The source of truth is [docs/prd/Pin it! PRD v0.2.pdf](docs/prd/), which updates
 ## Stack
 
 - **Front end:** React + Vite.
-- **Map:** Leaflet + OpenStreetMap standard tiles (no key). The user tried Naver Maps and dropped it (NCP needs a payment method and a 대표 계정 for the free quota), so don't bring Naver or Kakao back without asking. OSM tiles need a Referer (serve over http(s), not `file://`) and the © OpenStreetMap contributors attribution. The prototype still uses Leaflet with no tiles.
+- **Map:** Leaflet + 브이월드 배경지도 (`Base` WMTS tiles with `VITE_VWORLD_KEY`; user's choice for a Naver-like look). The map is locked to Korea (`maxBounds`, minZoom 7) so it never wraps sideways. The user tried Naver Maps and dropped it (NCP needs a payment method and a 대표 계정 for the free quota), so don't bring Naver or Kakao map tiles back without asking. 길찾기 links to Naver Map transit directions (`map.naver.com/p/directions/-/<lng>,<lat>,<name>,,/-/transit`). Show the 브이월드(국토교통부) attribution. The prototype still uses Leaflet with no tiles.
 - **Back end:** Supabase (Auth with email confirmation, Postgres + RLS, Storage, Edge Functions).
 - **Places (user's decision, replaces the PRD's Kakao Local API):** public open data, cleaned and stored in the Supabase `places` table (`supabase/migrations/`), plus nationwide 브이월드 search results saved when someone pins one (`save_place` RPC, logged-in users only, source `vworld`). Anyone can read the table; there is no write policy.
   - **Nationwide search:** the browser calls the 브이월드 search API by JSONP (`geoSearch` in `src/lib/places.js`; `place` = POIs, `district` = 행정구역, tried L1 → L2 → L4). 브이월드 sends no CORS headers and blocks foreign IPs, so calling it from Supabase (Sydney) times out; don't move it server-side. The key is `VITE_VWORLD_KEY` and is visible in the page (user accepted this for the low-traffic beta).
@@ -47,7 +52,7 @@ npm run preview   # serves dist/ on :4173 for headless-Chrome checks
   - `ui.toast(msg, {label, to | fn})`, `await ui.dialog({...})` (resolves true/false, or the text when `input` is set) and `ui.sheet(close => <jsx/>)` replace the prototype's `toast`/`dialog`/`sheet`.
   - `?toast=` in a route shows a toast once and is then removed from the URL.
   - `useNeedLogin()` returns `needLogin(next)`, which sends you to `/login?next=…`.
-- **Map:** `src/ui/map.js`. `const [ref, map] = useMap({center, zoom, interactive})` creates the map once. Add markers in an effect that depends on `map` and remove them in the cleanup. Call `map.invalidateSize()` after showing a map that was hidden.
+- **Map:** `src/ui/map.js`. `const [ref, map] = useMap({center, zoom, interactive})` creates the map once. Add markers in an effect that depends on `map` and remove them in the cleanup. Call `map.invalidateSize()` after showing a map that was hidden. Markers show the category icon (`categories` table, admin-managed), are brand-colored for my pins and gray for others, and scale with zoom (`--mk`). `MapGrip` (kit.jsx) under a map lets users drag its height.
 - **Checking a change:** `npm run build`, then `npm run preview` and screenshot routes with headless Chrome: `chrome --headless --screenshot=out.png --window-size=500,900 "http://localhost:4173/#/home"`. For click-through checks, install `puppeteer-core` in the scratchpad (not in `main/`) and point it at the system Chrome.
 
 ## Product rules

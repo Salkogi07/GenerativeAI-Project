@@ -1,7 +1,6 @@
 // 장소 — Supabase places 테이블(공공데이터 + 브이월드 검색 결과). 누구나 읽기만 할 수 있어요.
 import { supabase } from '../supabase.js';
 import { log, problem } from './log.js';
-import { dist } from './store.js';
 
 const COLS = 'id,name,category,address,lat,lng';
 const norm = p => ({ ...p, cat: p.category });
@@ -14,16 +13,6 @@ export async function searchPlaces(words) {
   const { data, error } = await q.limit(20);
   if (error) log('searchPlaces', error);
   return error ? null : data.map(norm);
-}
-
-// pos에서 r미터 안의 장소, 가까운 순.
-export async function nearPlaces(pos, r = 300, n = 4) {
-  if (!supabase) return [];
-  const dLat = r / 111320, dLng = r / (111320 * Math.cos(pos.lat * Math.PI / 180));
-  const { data, error } = await supabase.from('places').select(COLS)
-    .gte('lat', pos.lat - dLat).lte('lat', pos.lat + dLat).gte('lng', pos.lng - dLng).lte('lng', pos.lng + dLng).limit(50);
-  if (error) return [];
-  return data.map(p => ({ ...norm(p), d: dist(pos, p) })).filter(p => p.d <= r).sort((a, b) => a.d - b.d).slice(0, n);
 }
 
 export async function placeById(id) {

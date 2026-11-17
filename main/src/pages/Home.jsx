@@ -1,7 +1,7 @@
 // 지도 홈: 공개 핀 지도, 카테고리 칩, 핀 미리보기 카드, 내 위치, 핀 찍기.
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CATS, ago, likeCount, me, nickOf, pinKind, pinReviews, pins, placePhotos, region as curRegion, useStore, visibleCount } from '../lib/store.js';
+import { ago, cats, likeCount, me, nickOf, pinKind, pinReviews, pins, placePhotos, region as curRegion, useStore, visibleCount } from '../lib/store.js';
 import { AdLabel, Icon, Photo, Screen, ui, useNeedLogin } from '../ui/kit.jsx';
 import { addPins, markerIcon, useMap } from '../ui/map.js';
 
@@ -52,9 +52,9 @@ export default function Home() {
       <div className="float map-top">
         <Link className="search-pill" to="/search"><Icon n="search" />장소, 키워드, 리스트 검색</Link>
         <div className="chips" role="radiogroup" aria-label="카테고리">
-          {['전체', ...CATS.slice(0, 4)].map(c => { const v = c === '전체' ? '' : c;
+          {[{ name: '전체', icon: '' }, ...cats()].map(({ name: c, icon }) => { const v = c === '전체' ? '' : c;
             return <button key={c} className={`chip raised ${cat === v ? 'on' : ''}`} role="radio" aria-checked={cat === v}
-              onClick={() => setCat(cat === v ? '' : v)}>{c}</button>; })}
+              onClick={() => setCat(cat === v ? '' : v)}>{icon && `${icon} `}{c}</button>; })}
         </div>
       </div>
       {!sel && <button className="float fab fab-loc" aria-label="내 위치로 이동" onClick={locate}><Icon n="locate" /></button>}
@@ -65,6 +65,7 @@ export default function Home() {
             <span className="pv-sub">{pinKind(sel)} · 리뷰 {visibleCount(sel.id)} · 찜 {likeCount(sel.id)}</span>
             <span className="pv-by">{nickOf(sel.author)} 님의 핀</span></span>
           <Icon n="chev" cls="muted" /></span>
+        <AdLabel r={sel} />
         <span className="pv-desc">{sel.desc || '아직 설명이 없어요.'}</span>
         <span className="pv-rvs">{rs.length ? <><span className="pv-h">최근 리뷰</span>{rs.map(r => <span className="pv-rv" key={r.id}>
           <span className="pv-who">{nickOf(r.by)} · {ago(r.at)}</span><AdLabel r={r} /><span className="pv-body">{r.body}</span></span>)}</>

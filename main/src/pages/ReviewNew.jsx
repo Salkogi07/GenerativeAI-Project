@@ -31,7 +31,9 @@ export default function ReviewNew() {
       : error.code === '23505' ? '이 핀에는 이미 리뷰를 남겼어요' : error.message?.includes('daily_review_limit') ? '오늘은 리뷰를 더 쓸 수 없어요' : '리뷰를 등록하지 못했어요. 다시 시도해 주세요');
     clean();
     // 등록 뒤 AI 광고성 판정은 서버에서 따로 실행되고, 결과는 작성자에게 보이지 않음
-    nav(`/pin?id=${pin.id}&toast=${encodeURIComponent('리뷰를 등록했어요')}`);
+    // 저장 뒤 뒤로 가기가 이 화면으로 돌아오지 않게: 핀 화면에서 왔으면 그리로 돌아가고, 아니면 이 화면을 핀으로 바꿔요
+    if (window.history.state?.idx > 0) { nav(-1); setTimeout(() => ui.toast('리뷰를 등록했어요'), 60); }
+    else nav(`/pin?id=${pin.id}&toast=${encodeURIComponent('리뷰를 등록했어요')}`, { replace: true });
   };
 
   return <Screen guard title="리뷰 쓰기">

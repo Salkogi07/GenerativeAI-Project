@@ -31,7 +31,7 @@ export const iconSvg = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 2
 export const Icon = ({ n, cls = '' }) => <svg className={`i ${cls}`} viewBox="0 0 24 24" aria-hidden="true" dangerouslySetInnerHTML={{ __html: ICONS[n] || '' }} />;
 
 // ---------- 토스트·대화상자·시트 (화면 위에 하나씩) ----------
-let overlay = { toast: null, dialog: null, sheets: [] };
+let overlay = { toast: null, dialog: null, sheets: [], view: null };
 const osubs = new Set();
 const setOverlay = patch => { overlay = { ...overlay, ...patch }; osubs.forEach(f => f()); };
 let toastTimer;
@@ -51,6 +51,8 @@ export const ui = {
     setOverlay({ sheets: [...overlay.sheets, s] });
     return close;
   },
+  // 사진 크게 보기: 사진 목록과 처음 보여 줄 번호. 옆으로 넘겨 볼 수 있어요.
+  view(list, i = 0) { setOverlay({ view: { list, i } }); },
 };
 
 function Overlays() {
@@ -59,7 +61,16 @@ function Overlays() {
     {o.sheets.map(s => <div key={s.key}><div className="dim" onClick={s.close} /><div className="sheet" role="dialog" aria-modal="true"><div className="grab" />{s.render(s.close)}</div></div>)}
     {o.dialog && <Dialog {...o.dialog} key={o.dialog.title} />}
     {o.toast && <Toast {...o.toast} key={o.toast.key} />}
+    {o.view && <Viewer {...o.view} />}
   </>;
+}
+
+function Viewer({ list, i }) {
+  const close = () => setOverlay({ view: null });
+  return <div className="viewer" role="dialog" aria-modal="true" aria-label="사진 크게 보기" onClick={close}>
+    <div className="viewer-strip" ref={el => { if (el) el.scrollLeft = el.clientWidth * i; }}>{list.map((p, j) => <img key={j} src={p} alt={`사진 ${j + 1}`} />)}</div>
+    <button className="icon-btn viewer-x" aria-label="닫기"><Icon n="close" /></button>
+  </div>;
 }
 
 function Toast({ msg, action }) {
@@ -110,7 +121,7 @@ const TABS = [['홈', '/home', 'home'], ['피드', '/feed', 'feed'], ['마이페
 // nav: 탭 바에서 켜질 탭 이름(없으면 탭 바 없음). guard: 입력하면 나갈 때 확인.
 export function Screen({ nav, guard, title, children }) {
   const nav2 = useNavigate(), loc = useLocation();
-  useEffect(() => { clean(); }, [loc.pathname]);
+  useEffect(() => { clean(); if (overlay.view) setOverlay({ view: null }); }, [loc.pathname]);
   useEffect(() => { if (title) document.title = `${title} · Pin it!`; }, [title]);
   // ?toast=… 로 넘어온 안내를 띄우고 주소에서 지워요
   useEffect(() => {
@@ -150,10 +161,25 @@ export function useNeedLogin() {
   };
 }
 
+// ---------- 지도 손잡이 ----------
+// 지도 바로 아래에 두면, 끌어서 지도 높이를 바꿀 수 있어요 (아래 목록이 내려가요).
+export function MapGrip({ mapRef, map }) {
+  const down = e => {
+    const el = mapRef.current, y0 = e.clientY, h0 = el.offsetHeight, max = el.closest('.scr').clientHeight - 140;
+    const move = ev => { el.style.height = `${Math.min(max, Math.max(120, h0 + ev.clientY - y0))}px`; map?.invalidateSize(); };
+    const up = () => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); };
+    addEventListener('pointermove', move);
+    addEventListener('pointerup', up);
+  };
+  return <div className="map-grip" role="separator" aria-label="끌어서 지도 크기 조절" onPointerDown={down}><span /></div>;
+}
+
 // ---------- 사진 ----------
 // 저장된 사진은 Storage 주소(https) 또는 올리기 전 미리보기(data URL)
-export const Photo = ({ p, alt = '사진', cls = 'photo' }) => /^(https?|data):/.test(p)
-  ? <div className={cls}><img src={p} alt={alt} /></div> : <div className={`${cls} ${p}`} role="img" aria-label={alt} />;
+// zoom: 같이 보여 줄 사진 목록을 주면 눌러서 크게 볼 수 있어요.
+export const Photo = ({ p, alt = '사진', cls = 'photo', zoom }) => /^(https?|data):/.test(p)
+  ? zoom ? <button type="button" className={`${cls} zoomable`} aria-label={`${alt} 크게 보기`} onClick={() => ui.view(zoom, zoom.indexOf(p))}><img src={p} alt={alt} /></button>
+    : <div className={cls}><img src={p} alt={alt} /></div> : <div className={`${cls} ${p}`} role="img" aria-label={alt} />;
 
 export function PhotoPicker({ photos, onAdd, onRemove }) {
   const file = useRef(null);
@@ -185,7 +211,7 @@ export function ReviewCard({ r, viewer, onMore }) {
       <span className="dt">{fmtDate(r.at)}{viewer?.id === r.by ? ' · 내 리뷰' : ''}</span>
       <button className="icon-btn more" aria-label="리뷰 메뉴" onClick={() => onMore(r)}><Icon n="more" /></button></div>
     <AdLabel r={r} />
-    <p>{r.body}</p>{r.photos?.length > 0 && <div className="photos">{r.photos.map((p, i) => <Photo key={i} p={p} alt="리뷰 사진" />)}</div>}
+    <p>{r.body}</p>{r.photos?.length > 0 && <div className="photos">{r.photos.map((p, i) => <Photo key={i} p={p} alt="리뷰 사진" zoom={r.photos} />)}</div>}
   </div>;
 }
 
