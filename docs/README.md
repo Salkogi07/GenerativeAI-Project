@@ -4,6 +4,7 @@ Pin it! 기획 문서 모음.
 
 | 경로 | 내용 |
 |---|---|
+| [prd/README.md](prd/README.md) | PRD v0.2 · v0.1 버전별 요약과 차이 |
 | [wireframe/README.md](wireframe/README.md) | 와이어프레임 v0.1~v0.3 버전별 정리 |
 | [CHANGELOG.md](CHANGELOG.md) | 버전별 변경 이력 (최신 버전이 맨 위) |
 | [prd/](prd/) | PRD v0.2 (와이어프레임 v0.1~v0.3 반영, 최신) · v0.1 (확정본) |
