@@ -63,7 +63,7 @@ export default function Pin() {
             href={`https://www.openstreetmap.org/?mlat=${pin.lat}&mlon=${pin.lng}#map=18/${pin.lat}/${pin.lng}`}>지도에서 크게 보기</a></>}</div>
         <p className={`pin-desc ${pin.desc ? '' : 'is-empty'}`}>{pin.desc || (isMine ? '아직 설명이 없어요. 이 장소를 어떻게 쓰면 좋은지 적어 보세요.' : '아직 설명이 없어요.')}</p>
         {pin.photos?.length > 0 && <div className="photos">{pin.photos.map((p, i) => <Photo key={i} p={p} alt={`${pin.name} 사진`} />)}</div>}
-        {isMine && <Link className="btn sm line pin-edit" to={`/pin-edit?id=${pin.id}`}><Icon n="edit" cls="sm" />설명 수정</Link>}
+        {isMine && <Link className="btn sm line pin-edit" to={`/pin-edit?id=${pin.id}`}><Icon n="edit" cls="sm" />핀 수정</Link>}
       </div>
       <div className="divider" />
       <div className="sec-h reviews-h" id="reviews-h"><span>리뷰 <span className="num">{rs.filter(r => !r.hidden).length}</span></span><span className="order">최신순</span></div>

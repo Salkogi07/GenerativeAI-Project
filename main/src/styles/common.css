@@ -79,6 +79,7 @@ ul{padding-left:18px}
 .btn.fixed-w{width:100px;flex:none}
 .btn.flex1{flex:1}
 .text-link{font-size:14px;color:var(--sub);text-decoration:underline;text-underline-offset:3px}
+.text-link.danger-link{color:var(--err);margin-top:8px}
 .text-link.center{align-self:center;text-align:center;padding:14px 0 0}
 .text-link.brand-link{color:var(--brand);font-weight:600}
 
@@ -203,7 +204,8 @@ ul{padding-left:18px}
 /* ---------- reviews ---------- */
 .rv{padding:18px 20px;border-top:1px solid var(--line)}
 .rv .who{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.avatar{width:30px;height:30px;border-radius:15px;background:var(--brand-weak);color:var(--brand);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.avatar{overflow:hidden;width:30px;height:30px;border-radius:15px;background:var(--brand-weak);color:var(--brand);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.avatar img{width:100%;height:100%;object-fit:cover}
 .rv .nm{font-size:14px;font-weight:700}
 .rv .dt{font-size:12.5px;color:var(--mute)}
 .rv p{font-size:15px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
@@ -211,7 +213,7 @@ ul{padding-left:18px}
 .rv.held{color:var(--mute);font-size:14px;display:flex;align-items:center;gap:8px}
 .photos{display:flex;gap:6px;margin-top:12px}
 .photos.flush{margin-top:0}
-.own-check{min-height:44px;margin-top:6px;font-size:14px}
+.field>.own-check{display:flex;align-items:center;gap:10px;min-height:44px;margin:6px 0 0;font-size:14px;font-weight:500;color:var(--text)}
 .sort-chips{padding:12px 20px 4px;flex:none}
 .frv{display:block;padding:16px 20px;border-bottom:1px solid var(--line)}
 .frv:active{background:var(--surface)}

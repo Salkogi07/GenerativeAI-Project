@@ -46,7 +46,7 @@ export async function refresh() {
     supabase.from('pins').select('*'),
     supabase.from('reviews').select('*'),
     supabase.from('lists').select('*'),
-    supabase.from('profiles').select('id,nick,created_at'),
+    supabase.from('profiles').select('id,nick,avatar,created_at'),
     supabase.rpc('like_counts'),
     user ? supabase.from('reports').select('review_id,reporter,reason') : { data: [] },
     admin ? supabase.from('review_ai_checks').select('*') : { data: [] },
@@ -67,7 +67,7 @@ export async function refresh() {
     ai: ai.data,
     user: user && { id: user.id, email: user.email, nick: '', created: t(user.created_at), location: user.user_metadata?.location !== false, admin },
   };
-  if (S.user) S.user.nick = S.nick.get(user.id)?.nick || '';
+  if (S.user) Object.assign(S.user, { nick: S.nick.get(user.id)?.nick || '', avatar: S.nick.get(user.id)?.avatar || null });
   changed();
 }
 
@@ -86,6 +86,7 @@ export const aiChecks = () => S.ai;
 export const me = () => S.user;
 export const pinById = id => S.pins.find(p => p.id === id);
 export const nickOf = id => S.nick.get(id)?.nick || '알 수 없음';
+export const avatarOf = id => S.nick.get(id)?.avatar || null;
 export const isNew = u => Date.now() - u.created < 7 * DAY;
 export const todayCount = u => S.reviews.filter(r => r.by === u.id && new Date(r.at).toDateString() === new Date().toDateString()).length;
 export const pinReviews = id => S.reviews.filter(r => r.pin === id).sort((a, b) => b.at - a.at);
@@ -97,13 +98,13 @@ export const pinKind = p => p.kind === '위치' ? '위치 핀' : p.cat;
 
 // ---------- 사진: 첨부 검사·축소 → 저장할 때 Storage에 올려요 ----------
 // 최대 3장 · JPG·PNG·WebP · 장당 5MB. 오류 문구를 돌려줘요.
-export async function addPhotos(files, photos) {
+export async function addPhotos(files, photos, max = 1280) {
   let err = '';
   for (const f of files) {
     if (photos.length >= 3) { err = '사진은 최대 3장까지 올릴 수 있어요.'; break; }
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) { err = 'JPG·PNG·WebP 사진만 올릴 수 있어요.'; continue; }
     if (f.size > 5 * 1024 * 1024) { err = `"${f.name}"은 5MB를 넘어요.`; continue; }
-    photos.push(await shrink(f, 1280));
+    photos.push(await shrink(f, max));
   }
   return err;
 }
@@ -124,10 +125,10 @@ function shrink(file, max) {
   });
 }
 // data URL 사진들을 photos/<내 id>/ 에 올리고 공개 주소를 돌려줘요. 실패하면 null.
-export async function uploadPhotos(dataUrls) {
+export async function uploadPhotos(dataUrls, dir = '') {
   const urls = [];
   for (const d of dataUrls) {
-    const blob = await (await fetch(d)).blob(), path = `${S.user.id}/${crypto.randomUUID()}.jpg`;
+    const blob = await (await fetch(d)).blob(), path = `${S.user.id}/${dir}${crypto.randomUUID()}.jpg`;
     const { error } = await supabase.storage.from('photos').upload(path, blob, { contentType: 'image/jpeg' });
     if (error) return null;
     urls.push(supabase.storage.from('photos').getPublicUrl(path).data.publicUrl);
