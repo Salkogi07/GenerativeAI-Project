@@ -1,7 +1,7 @@
 // 공통 UI: 아이콘, 화면 틀(탭 바·뒤로 가기·작성 중 확인), 토스트·대화상자·바텀시트, 사진, 리뷰 카드, 약관 문서.
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ago, avatarOf, fmtDate, me, nickOf, pinById, pinKind } from '../lib/store.js';
+import { ago, fmtDate, me, nickOf, pinById, pinKind } from '../lib/store.js';
 import { useProblems } from '../lib/log.js';
 
 // ---------- 아이콘 ----------
@@ -168,12 +168,6 @@ export function PhotoPicker({ photos, onAdd, onRemove }) {
   </>;
 }
 
-// 프로필 사진, 없으면 닉네임 첫 글자
-export const Avatar = ({ id, cls = '' }) => {
-  const a = avatarOf(id);
-  return <span className={`avatar ${cls}`}>{a ? <img src={a} alt="" /> : nickOf(id)[0].toUpperCase()}</span>;
-};
-
 // ---------- 리뷰 ----------
 export const AdLabel = ({ r }) => (r.ad || r.adminLabel) ? <span className="ad-label">협찬·광고</span> : null;
 
@@ -181,7 +175,7 @@ export function ReviewCard({ r, viewer, onMore }) {
   if (r.hidden) return <div className="rv held" id={`rv-${r.id}`}><Icon n="eyeoff" cls="sm" />신고가 접수돼 검토 중인 리뷰예요.</div>;
   const nick = nickOf(r.by);
   return <div className="rv" id={`rv-${r.id}`}>
-    <div className="who"><Avatar id={r.by} /><span className="nm">{nick}</span>
+    <div className="who"><span className="avatar">{nick[0].toUpperCase()}</span><span className="nm">{nick}</span>
       <span className="dt">{fmtDate(r.at)}{viewer?.id === r.by ? ' · 내 리뷰' : ''}</span>
       <button className="icon-btn more" aria-label="리뷰 메뉴" onClick={() => onMore(r)}><Icon n="more" /></button></div>
     <AdLabel r={r} />

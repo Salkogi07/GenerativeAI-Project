@@ -1,15 +1,14 @@
 // 마이페이지: 프로필·활동 수(눌러서 펼치기), 신규 계정 리뷰 제한, 닉네임 수정, 위치 정보 이용, 약관, 로그아웃·탈퇴.
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { DAY, addPhotos, ago, isNew, lists, me, pinKind, pins, refresh, reviews, run, todayCount, uploadPhotos, useStore, visibleCount } from '../lib/store.js';
+import { DAY, ago, isNew, lists, me, pinKind, pins, refresh, reviews, run, todayCount, useStore, visibleCount } from '../lib/store.js';
 import { supabase } from '../supabase.js';
-import { Avatar, Icon, Photo, ReviewLink, Screen, openDoc, ui } from '../ui/kit.jsx';
-import { log } from '../lib/log.js';
+import { Icon, Photo, ReviewLink, Screen, openDoc, ui } from '../ui/kit.jsx';
 
 export default function Me() {
   useStore();
   const nav = useNavigate(), u = me();
-  const [open, setOpen] = useState(''), file = useRef(null);
+  const [open, setOpen] = useState('');
   if (!u) return <Screen nav="마이페이지" title="마이페이지">
     <div className="top"><span className="brand">Pin it!</span></div>
     <div className="body"><div className="empty"><span className="ic"><Icon n="user" /></span><div className="t">로그인이 필요해요</div><div className="s">로그인하면 핀을 남기고<br />리스트를 만들 수 있어요.</div>
@@ -39,29 +38,6 @@ export default function Me() {
     const { error } = await run(supabase.from('profiles').update({ nick: v }).eq('id', u.id));
     ui.toast(error ? '닉네임을 바꾸지 못했어요' : '닉네임을 바꿨어요');
   };
-  // 프로필 사진: 256px로 줄여(EXIF 제거) photos/<내 id>/ 에 올려요
-  const setAvatar = async f => {
-    const a = [], err = await addPhotos([f], a, 256);
-    if (err) return ui.toast(err);
-    const urls = await uploadPhotos(a, 'avatar/');
-    const { error } = urls ? await saveAvatar(urls[0]) : { error: 'upload' };
-    if (error) log('avatar', error);
-    ui.toast(error ? '프로필 사진을 바꾸지 못했어요' : '프로필 사진을 바꿨어요');
-  };
-  // 프로필에 새 주소(또는 null)를 저장하고, 성공하면 예전 파일을 Storage에서 지워요
-  const saveAvatar = async url => {
-    const old = u.avatar, res = await run(supabase.from('profiles').update({ avatar: url }).eq('id', u.id));
-    const path = old?.split('/object/public/photos/')[1];
-    if (!res.error && path) supabase.storage.from('photos').remove([path]).then(({ data, error }) => { if (error || !data?.length) log('avatar.remove', error || `지우지 못함: ${path}`); });
-    return res;
-  };
-  const avatarMenu = () => {
-    if (!u.avatar) return file.current.click();
-    ui.sheet(c => <div className="menu-sheet">
-      <button onClick={() => { c(); file.current.click(); }}><Icon n="camera" />사진 바꾸기</button>
-      <button className="danger" onClick={async () => { c(); const { error } = await saveAvatar(null); ui.toast(error ? '사진을 지우지 못했어요' : '프로필 사진을 지웠어요'); }}><Icon n="close" />사진 지우기</button>
-    </div>);
-  };
   // 메일의 링크를 누르면 앱에서 새 비밀번호를 받아요 (main.jsx)
   const pw = async () => {
     if (!(await ui.dialog({ title: '비밀번호를 바꿀까요?', body: `${u.email}로 비밀번호 변경 링크를 보내 드려요.`, ok: '메일 보내기' }))) return;
@@ -90,8 +66,7 @@ export default function Me() {
     <div className="body">
       <div className="big-title">마이페이지</div>
       <div className="profile">
-        <button className="avatar-btn" aria-label="프로필 사진 바꾸기" onClick={avatarMenu}><Avatar id={u.id} cls="lg" /><span className="badge"><Icon n="camera" /></span></button>
-        <input ref={file} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={e => { const f = e.target.files[0]; e.target.value = ''; if (f) setAvatar(f); }} />
+        <span className="avatar lg">{u.nick[0].toUpperCase()}</span>
         <div className="fl"><div className="p-nick">{u.nick}</div><div className="p-mail ell">{u.email} · 인증 완료</div>
           <div className="p-date">{j.getFullYear()}.{j.getMonth() + 1}.{j.getDate()} 가입</div></div>
         <button className="btn sm sec" onClick={editNick}>수정</button>
