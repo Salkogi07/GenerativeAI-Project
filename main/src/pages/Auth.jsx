@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { refresh } from '../lib/store.js';
 import { supabase } from '../supabase.js';
+import { log } from '../lib/log.js';
 import { BackBtn, Icon, Screen, clean, openDoc, ui } from '../ui/kit.jsx';
 
 // 인증 메일 링크가 돌아올 곳: 지금 주소에서 #… 를 뺀 앱 첫 화면
@@ -40,10 +41,12 @@ export function Login() {
     e.preventDefault();
     const em = email.trim().toLowerCase();
     if (!em || !pw) return setErr('이메일과 비밀번호를 입력해 주세요.');
+    if (!supabase) return setErr('서버에 연결되지 않아 로그인할 수 없어요.');
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email: em, password: pw });
     setBusy(false);
     setUnverified(error?.code === 'email_not_confirmed' ? em : '');
+    if (error && error.code !== 'invalid_credentials' && error.code !== 'email_not_confirmed') log('login', error);
     if (error) return setErr(error.code === 'email_not_confirmed' ? '' : error.status === 429 ? '시도가 너무 많아요. 잠시 후 다시 해 주세요.' : '이메일 또는 비밀번호가 맞지 않아요.');
     await refresh();
     nav(next, { replace: true });

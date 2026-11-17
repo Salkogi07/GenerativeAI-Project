@@ -1,5 +1,6 @@
 // 장소 — Supabase places 테이블(공공데이터 + 브이월드 검색 결과). 누구나 읽기만 할 수 있어요.
 import { supabase } from '../supabase.js';
+import { log, problem } from './log.js';
 import { dist } from './store.js';
 
 const COLS = 'id,name,category,address,lat,lng';
@@ -11,6 +12,7 @@ export async function searchPlaces(words) {
   let q = supabase.from('places').select(COLS);
   for (const w of words) q = q.ilike('name', `%${w.replace(/[%_]/g, '')}%`);
   const { data, error } = await q.limit(20);
+  if (error) log('searchPlaces', error);
   return error ? null : data.map(norm);
 }
 
@@ -33,6 +35,7 @@ export async function placeById(id) {
 // ---------- 전국 검색: 브이월드 검색 API ----------
 // 브이월드는 CORS를 안 열어 주고 해외 서버(Supabase)도 막아서, 브라우저에서 JSONP로 불러요. 키는 페이지에 보여요(사용자 결정).
 const VW = import.meta.env.VITE_VWORLD_KEY;
+if (!VW) problem('전국 검색을 쓸 수 없어요.', 'config', '브이월드 설정 없음: VITE_VWORLD_KEY 가 main/.env.local에 비어 있어요');
 let seq = 0;
 function jsonp(url) {
   return new Promise((res, rej) => {
@@ -50,8 +53,11 @@ async function vworld(params) {
   const q = new URLSearchParams({ service: 'search', request: 'search', version: '2.0', crs: 'EPSG:4326', size: '20', page: '1', format: 'json', errorformat: 'json', key: VW, ...params });
   try {
     const r = (await jsonp(`https://api.vworld.kr/req/search?${q}`)).response;
-    return r.status === 'OK' ? r.result.items : r.status === 'NOT_FOUND' ? [] : null;
-  } catch { return null; }
+    if (r.status === 'OK') return r.result.items;
+    if (r.status === 'NOT_FOUND') return [];
+    problem('전국 검색 서버에 문제가 있어요.', 'vworld', r);
+    return null;
+  } catch (e) { problem('전국 검색 서버에 연결하지 못했어요.', 'vworld', e); return null; }
 }
 
 // kind 'place' → 장소(POI): { id(우리 places에 저장된 적 있으면), key, name, cat, address, lat, lng }

@@ -19,7 +19,7 @@ function PinNewForm({ u, sp }) {
   const start = sp.get('lat') ? [+sp.get('lat'), +sp.get('lng')] : region().slice(1);
   const [pos, setPos] = useState({ lat: start[0], lng: start[1] });
   const [name, setName] = useState(''), [nameErr, setNameErr] = useState('');
-  const [cat, setCat] = useState(''), [link, setLink] = useState(placeId || '');
+  const [desc, setDesc] = useState(''), [cat, setCat] = useState(''), [link, setLink] = useState(placeId || '');
   const [near, setNear] = useState([]), [photos, setPhotos] = useState([]), [photoErr, setPhotoErr] = useState(''), [own, setOwn] = useState(false), [busy, setBusy] = useState(false);
   const [ref, map] = useMap({ center: start, zoom: 17 });
   const mkRef = useRef(null), nameRef = useRef(null);
@@ -82,7 +82,7 @@ function PinNewForm({ u, sp }) {
     setBusy(true);
     const urls = await uploadPhotos(photos);
     const { data, error } = urls ? await run(supabase.from('pins').insert({ name: nm, cat, place_id: link ? Number(link) : null,
-      lat: +pos.lat.toFixed(6), lng: +pos.lng.toFixed(6), photos: urls }).select('id').single()) : { error: { code: 'photo' } };
+      lat: +pos.lat.toFixed(6), lng: +pos.lng.toFixed(6), description: desc.trim(), photos: urls }).select('id').single()) : { error: { code: 'photo' } };
     setBusy(false);
     if (error) return ui.toast(error.code === 'photo' ? '사진을 올리지 못했어요. 다시 시도해 주세요'
       : error.code === '23505' ? '방금 다른 사람이 이 장소에 핀을 남겼어요. 검색에서 다시 찾아 주세요' : '핀을 저장하지 못했어요. 다시 시도해 주세요');
@@ -104,6 +104,10 @@ function PinNewForm({ u, sp }) {
           <div className="hint bad">{nameErr}</div></div>
         <div className="field"><span className="label">카테고리</span>
           <div className="chips wrap">{CATS.map(c => <button key={c} className={`chip ${cat === c ? 'on' : ''}`} onClick={() => setCat(c)}>{c}</button>)}</div></div>
+        <div className="field"><label htmlFor="desc">설명 <span className="opt-note">· 선택</span></label>
+          <div className="control area"><textarea id="desc" rows={4} maxLength={500} placeholder="이 장소를 어떻게 쓰면 좋은지 적어 주세요. 예: 콘센트 자리, 붐비는 시간"
+            value={desc} onChange={e => setDesc(e.target.value)} /></div>
+          <div className="count num">{desc.length} / 500</div></div>
         <div className="field"><span className="label">사진 <span className="opt-note">· 선택, 최대 3장 · 장당 5MB · JPG·PNG·WebP</span></span>
           <PhotoPicker photos={photos} onRemove={i => setPhotos(photos.filter((_, j) => j !== i))}
             onAdd={async files => { const next = [...photos]; setPhotoErr(await addPhotos(files, next)); setPhotos(next); }} />

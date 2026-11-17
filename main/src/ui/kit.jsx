@@ -1,7 +1,8 @@
 // 공통 UI: 아이콘, 화면 틀(탭 바·뒤로 가기·작성 중 확인), 토스트·대화상자·바텀시트, 사진, 리뷰 카드, 약관 문서.
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ago, fmtDate, me, nickOf, pinById, pinKind } from '../lib/store.js';
+import { ago, avatarOf, fmtDate, me, nickOf, pinById, pinKind } from '../lib/store.js';
+import { useProblems } from '../lib/log.js';
 
 // ---------- 아이콘 ----------
 const ICONS = {
@@ -100,6 +101,11 @@ export const clean = () => { dirty = false; };
 const confirmLeave = async () => !dirty || (await ui.dialog({ title: '작성을 그만할까요?', body: '입력한 내용은 저장되지 않아요.', ok: '그만하기', danger: true }));
 
 // ---------- 화면 틀 ----------
+// 설정·서버 문제를 모든 화면 위에 계속 보여 줘요 (자세한 내용은 logs/app.log)
+function Problems() {
+  const ps = useProblems();
+  return ps.length > 0 && <div className="problems" role="alert">{ps.map(m => <p key={m}>{m}</p>)}</div>;
+}
 const TABS = [['홈', '/home', 'home'], ['피드', '/feed', 'feed'], ['마이페이지', '/me', 'user']];
 // nav: 탭 바에서 켜질 탭 이름(없으면 탭 바 없음). guard: 입력하면 나갈 때 확인.
 export function Screen({ nav, guard, title, children }) {
@@ -115,6 +121,7 @@ export function Screen({ nav, guard, title, children }) {
     setTimeout(() => ui.toast(t), 60);
   }, [loc.search]);
   return <div className="phone"><div className="scr">
+    <Problems />
     <div className="contents" onInput={guard ? e => { if (e.target.closest('input,textarea')) markDirty(); } : undefined}>{children}</div>
     {nav && <nav className="tabbar" aria-label="주요 메뉴">{TABS.map(([n, to, i]) =>
       <Link key={n} to={to} className={n === nav ? 'on' : ''} aria-current={n === nav ? 'page' : undefined}
@@ -161,6 +168,12 @@ export function PhotoPicker({ photos, onAdd, onRemove }) {
   </>;
 }
 
+// 프로필 사진, 없으면 닉네임 첫 글자
+export const Avatar = ({ id, cls = '' }) => {
+  const a = avatarOf(id);
+  return <span className={`avatar ${cls}`}>{a ? <img src={a} alt="" /> : nickOf(id)[0].toUpperCase()}</span>;
+};
+
 // ---------- 리뷰 ----------
 export const AdLabel = ({ r }) => (r.ad || r.adminLabel) ? <span className="ad-label">협찬·광고</span> : null;
 
@@ -168,7 +181,7 @@ export function ReviewCard({ r, viewer, onMore }) {
   if (r.hidden) return <div className="rv held" id={`rv-${r.id}`}><Icon n="eyeoff" cls="sm" />신고가 접수돼 검토 중인 리뷰예요.</div>;
   const nick = nickOf(r.by);
   return <div className="rv" id={`rv-${r.id}`}>
-    <div className="who"><span className="avatar">{nick[0].toUpperCase()}</span><span className="nm">{nick}</span>
+    <div className="who"><Avatar id={r.by} /><span className="nm">{nick}</span>
       <span className="dt">{fmtDate(r.at)}{viewer?.id === r.by ? ' · 내 리뷰' : ''}</span>
       <button className="icon-btn more" aria-label="리뷰 메뉴" onClick={() => onMore(r)}><Icon n="more" /></button></div>
     <AdLabel r={r} />

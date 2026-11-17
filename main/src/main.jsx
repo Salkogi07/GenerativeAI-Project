@@ -16,6 +16,7 @@ import { Login, Signup, Terms, Verify } from './pages/Auth.jsx';
 import { refresh } from './lib/store.js';
 import { supabase } from './supabase.js';
 import { ui } from './ui/kit.jsx';
+import { problem } from './lib/log.js';
 
 // 로그인 상태가 바뀌면(로그인·로그아웃·인증 메일 링크) 다시 불러와요
 async function init() {
@@ -31,7 +32,7 @@ async function init() {
       setTimeout(() => ui.toast(q.has('error') ? '인증 링크가 만료됐어요. 로그인해서 다시 받아 주세요' : '이메일 인증이 끝났어요'), 300);
     }
   }
-  await refresh().catch(() => setTimeout(() => ui.toast('데이터를 불러오지 못했어요. 새로고침해 주세요'), 300));
+  await refresh().catch(e => problem('데이터를 불러오지 못했어요. 키가 맞는지 확인하고 새로고침해 주세요.', 'refresh', e));
 }
 
 // 비밀번호 재설정 메일 링크로 들어오면 새 비밀번호를 받아요
