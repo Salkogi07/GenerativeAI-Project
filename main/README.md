@@ -3,6 +3,8 @@
 프로토타입(`docs/prototype/`)을 React + Vite로 옮기고, 데이터를 Supabase에 저장하는 실제 서비스용 앱이에요.
 화면과 사용법은 [프로토타입](../docs/prototype/)과 같아요.
 
+배포된 사이트: <https://generative-ai-project-three.vercel.app/> (휴대폰 브라우저에서 바로 열려요)
+
 - **화면:** React 19, React Router(HashRouter)
 - **서버:** Supabase (회원, DB, 사진 저장소)
 - **지도:** Leaflet + 브이월드 배경지도
@@ -30,6 +32,39 @@ npm run dev
 <http://localhost:5173> 을 열어요.
 
 배포용 파일은 `npm run build`로 `main/dist/`에 만들어져요.
+
+## 배포 (Vercel)
+
+👉 **<https://generative-ai-project-three.vercel.app/>**
+
+[Vercel](https://vercel.com)이 이 저장소의 `main` 브랜치를 받아 빌드하고 올려요.
+
+- **자동 배포:** `main`에 푸시하면 1~2분 안에 다시 배포돼요. `main/` 폴더가 바뀌지 않은 푸시(문서·프로토타입만 수정)는 건너뛰어요.
+- **배포 확인:** Vercel 대시보드의 **Deployments**에서 상태가 **Ready**면 끝난 거예요. 빌드가 실패하면 그 배포를 눌러 로그를 봐요.
+
+### Vercel 프로젝트 설정
+
+| 항목 | 값 |
+|---|---|
+| 연결된 저장소 | `Salkogi07/GenerativeAI-Project` · Production 브랜치 `main` |
+| Root Directory | `main` |
+| Framework Preset | Vite (빌드 `npm run build`, 결과 `dist/`) |
+| Environment Variables | `VITE_SUPABASE_URL`, `VITE_SUPABASE_KEY`, `VITE_VWORLD_KEY` (Type: **Config**) |
+
+- 환경 변수 값은 `main/.env.local`과 같아요. 값을 바꾸면 **Deployments → ⋯ → Redeploy**를 해야 반영돼요. 빌드할 때 앱에 들어가는 값이라서예요.
+- `VITE_` 변수는 사이트 코드에 그대로 들어가 누구나 볼 수 있어서 Vercel이 Secret으로 저장하지 못하게 해요. 공개돼도 되는 키만 넣어요. Supabase는 publishable 키를 쓰고, 권한은 DB의 RLS가 막아요.
+- **DB 주소(`SUPABASE_DB_URL`)와 Supabase secret 키는 절대 넣지 마세요.** 이 값들은 저장소 맨 위 `.env.local`(내 컴퓨터 전용)에만 있어요.
+
+### Supabase 인증 주소
+
+가입 인증 메일과 비밀번호 재설정 메일의 링크가 배포 주소로 돌아오려면, Supabase 대시보드 **Authentication → URL Configuration**에 아래처럼 넣어 둬야 해요.
+
+| 항목 | 값 |
+|---|---|
+| Site URL | `https://generative-ai-project-three.vercel.app` |
+| Redirect URLs | `https://generative-ai-project-three.vercel.app/**`, `http://localhost:5173/**` (내 컴퓨터 개발용) |
+
+배포 주소를 바꾸면 이 두 칸도 같이 바꿔요.
 
 ## 문제가 생기면
 

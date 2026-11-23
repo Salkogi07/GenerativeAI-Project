@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-**Pin it!** is a mobile web prototype for finding and sharing location pins and wishlists, with reviews that show whether they are ads. The repo has planning documents (`docs/`) and a browser-only HTML prototype (`docs/prototype/`). The real React/Supabase app is in `main/` (see [Main app](#main-app-main)). The root `index.html` only redirects (meta refresh) to the prototype's `index.html`, and GitHub Pages serves it at https://salkogi07.github.io/GenerativeAI-Project/.
+**Pin it!** is a mobile web prototype for finding and sharing location pins and wishlists, with reviews that show whether they are ads. The repo has planning documents (`docs/`) and a browser-only HTML prototype (`docs/prototype/`). The real React/Supabase app is in `main/` (see [Main app](#main-app-main)). The root `index.html` only redirects (meta refresh) to the prototype's `index.html`, and GitHub Pages serves it at https://salkogi07.github.io/GenerativeAI-Project/. The main app is deployed on Vercel at https://generative-ai-project-three.vercel.app/ (project `generative-ai-project`, Root Directory `main`, the three `VITE_` env vars as Config type; every push to `main` that touches `main/` redeploys). The Vercel CLI is logged in on this machine and the repo root is linked (`.vercel/`, git-ignored).
 
 The source of truth is [docs/prd/Pin it! PRD v0.2.pdf](docs/prd/), which updates v0.1 (확정본) to match wireframes v0.1–v0.3; its section 7-5 lists decisions still open. Read it before you design or build anything. When the 기획서 (proposal) and the 실습 (lab) disagree, the PRD follows 실습 2·3.
 
