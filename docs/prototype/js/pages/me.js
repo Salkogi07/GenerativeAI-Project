@@ -20,6 +20,12 @@ function render() {
   $('#loc').classList.toggle('on', u.location !== false);
   $('#locRow').setAttribute('aria-checked', u.location !== false);
   $('#admin').hidden = !u.admin; // 메뉴 숨김은 편의, 실제 차단은 RLS
+  $$('.admin-more').forEach(a => { a.hidden = !u.admin; });
+  $('#appealN').textContent = `운영자 전용 · 대기 ${appeals().filter(a => a.status === 'open').length}건`;
+  $('#trashN').textContent = `운영자 전용 · ${trash().length}개 · 7일 보관`;
+  const unread = notices().filter(n => n.user === u.email && !n.read).length;
+  $('#unread').hidden = !unread;
+  $('#unread').textContent = unread;
 }
 const updateMe = fn => { const all = users(), x = all.find(y => y.email === u.email); fn(x); save('users', all); render(); };
 

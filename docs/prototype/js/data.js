@@ -77,6 +77,75 @@ const likeCount = id => lists().filter(l => l.pins.includes(id)).length;
 const placePhotos = p => [...(p.photos || []), ...pinReviews(p.id).filter(r => !r.hidden).flatMap(r => r.photos || [])];
 const pinKind = p => p.kind === '위치' ? '위치 핀' : p.cat;
 
+// ---------- 운영 처리: 신고 번호 · 휴지통(7일) · 처리 알림 · 이의 제기 · 키워드 판정 ----------
+// 실서비스는 서버(트리거·RLS·pg_cron)가 해요. 여기서는 브라우저 저장소로 흉내 내요.
+const nextSeq = k => { const n = DB.get(k, 0) + 1; DB.set(k, n); return n; };
+// 신고 번호: 리뷰 신고 R-12, 핀 신고 P-3
+const reportNo = (kind, id) => `${kind === 'pin' ? 'P' : 'R'}-${id}`;
+const nextReportNo = () => nextSeq('reportSeq');
+// 번호가 없는 신고(시드 데이터)에 번호를 매겨요
+(function numberReports() {
+  for (const k of ['pins', 'reviews']) {
+    const all = load(k);
+    let changed = false;
+    all.forEach(x => (x.reports || []).forEach(r => { if (!r.id) { r.id = nextReportNo(); changed = true; } }));
+    if (changed) save(k, all);
+  }
+})();
+
+// 휴지통: 지운 리뷰·핀을 7일 보관해요. 7일 지난 건 보이지 않고 다음 저장 때 빠져요.
+const trash = () => DB.get('trash', []).filter(t => Date.now() - t.deleted < 7 * DAY);
+function toTrash(kind, data) {
+  const by = me()?.email || '';
+  DB.set('trash', [{ id: nextSeq('trashSeq'), kind, data, reports: (data.reports || []).map(x => x.id), by, deleted: Date.now() }, ...trash()]);
+}
+// 리뷰 지우기: 휴지통으로. 운영자가 남의 신고된 리뷰를 지우면 작성자에게 알림.
+function removeReview(id) {
+  const all = reviews(), r = all.find(x => x.id === id), u = me();
+  if (!r) return;
+  if (u?.admin && r.by !== u.email && r.reports?.length) {
+    DB.set('notices', [{ id: nextSeq('noticeSeq'), user: r.by, kind: 'review_deleted', review: r.id, pinName: pinById(r.pin)?.name || '',
+      body: r.body, photos: r.photos || [], reports: r.reports.map(x => x.id), reasons: r.reports.map(x => x.reason), at: Date.now(), read: false }, ...notices()]);
+  }
+  toTrash('review', r);
+  save('reviews', all.filter(x => x.id !== id));
+}
+// 핀 지우기: 그 핀의 리뷰도 하나씩 휴지통으로
+function removePin(id) {
+  pinReviews(id).forEach(r => removeReview(r.id));
+  const all = pins();
+  toTrash('pin', all.find(x => x.id === id));
+  save('pins', all.filter(x => x.id !== id));
+}
+// 되살리기(운영자). 리뷰는 핀이 남아 있어야 하고 숨김이 풀린 상태로 돌아와요. 오류 문구를 돌려줘요.
+function restoreTrash(id) {
+  const all = trash(), t = all.find(x => x.id === id);
+  if (!t) return '휴지통에 없어요. 7일이 지나 완전히 지워졌을 수 있어요';
+  if (t.kind === 'review') {
+    if (!pinById(t.data.pin)) return '핀이 지워져 있어서 되살릴 수 없어요. 휴지통에서 핀을 먼저 되살려 주세요';
+    if (reviews().some(r => r.pin === t.data.pin && r.by === t.data.by)) return '같은 사람의 리뷰가 이미 있어서 되살릴 수 없어요';
+    save('reviews', [...reviews(), { ...t.data, hidden: false }]);
+    const d = DB.get('decisions', {}); d[t.data.id] = 'ok'; DB.set('decisions', d);
+  } else {
+    if (pinById(t.data.id)) return '이미 있는 핀이에요';
+    save('pins', [...pins(), t.data]);
+  }
+  DB.set('trash', all.filter(x => x.id !== id));
+  return '';
+}
+
+// 처리 알림(작성자)·이의 제기(알림마다 한 번)
+const notices = () => DB.get('notices', []);
+const appeals = () => DB.get('appeals', []);
+
+// 키워드 1차 판정: 광고 표현이 있으면 운영자 AI 의심 탭에 '키워드 판정'으로 올라가요(작성자가 협찬 체크를 했으면 건너뛰어요)
+const AD_WORDS = ['협찬', '광고', '제공받', '지원받', '원고료', '소정의', '체험단', '서포터즈', '대가를 받', '무상으로', '무료로 제공', '업체로부터', '쿠폰을 받', '쿠폰 받', '#ad', 'sponsored'];
+function keywordCheck(r) {
+  if (r.ad) return null;
+  const hits = AD_WORDS.filter(k => r.body.toLowerCase().includes(k));
+  return hits.length ? { confidence: Math.min(0.6 + 0.1 * hits.length, 0.95), reason: `광고 표현: ${hits.join(', ')}` } : null;
+}
+
 // 비로그인 → 로그인 화면, 로그인 뒤 원래 화면으로 복귀 (PRD 4-4)
 function needLogin(next = here()) {
   if (me()) return true;

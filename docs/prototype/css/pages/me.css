@@ -22,3 +22,4 @@
 .admin-row .thumb{background:#fff}
 .account-actions{padding-top:24px}
 .leave{color:var(--mute);padding-bottom:12px}
+.row .badge{min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--err);color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}

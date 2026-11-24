@@ -160,6 +160,32 @@ function reviewLinkHTML(r) {
     ${r.photos?.length ? `<span class="photos">${r.photos.map(x => photoHTML(x, '리뷰 사진')).join('')}</span>` : ''}</a>`;
 }
 
+// 휴지통 카드: 운영자 리뷰 검토(신고 번호 검색)·휴지통·이의 제기 화면이 같이 써요
+function trashCard(t) {
+  const d = t.data, author = t.kind === 'pin' ? d.author : d.by, left = Math.max(0, 7 - Math.floor((Date.now() - t.deleted) / DAY));
+  const by = !t.by ? '' : t.by === author ? ' · 작성자가 지움' : ` · ${esc(nickOf(t.by))}(운영자)가 지움`;
+  const photos = d.photos || [];
+  return `<div class="review-card" data-trash="${t.id}">
+    <div class="meta"><span><b>${esc(t.kind === 'pin' ? d.name : pinById(d.pin)?.name || '삭제된 핀')}</b> · ${esc(nickOf(author, d.nick))}</span><span class="tag">휴지통 · ${left}일 남음</span></div>
+    <p class="quote">${esc((t.kind === 'pin' ? d.desc : d.body) || '설명이 없어요.')}</p>
+    ${photos.length ? `<div class="photos">${photos.map(p => photoHTML(p, '지운 사진')).join('')}</div>` : ''}
+    <div class="report-line"><b>${t.kind === 'pin' ? '핀' : '리뷰'}</b> · <span>${fmtDate(t.deleted)}${by}</span>${t.reports.length ? `<span class="report-nos num">${t.reports.map(id => reportNo(t.kind, id)).join(' · ')}</span>` : ''}</div>
+    <div class="decide"><button class="btn sm line" data-restore>되살리기</button></div>
+  </div>`;
+}
+// 휴지통 카드의 되살리기 버튼. 버튼을 눌렀으면 true를 돌려줘요.
+async function trashClick(e) {
+  const b = e.target.closest('[data-restore]');
+  if (!b) return false;
+  const t = trash().find(x => x.id === Number(b.closest('[data-trash]').dataset.trash));
+  if (!t) return true;
+  const what = t.kind === 'pin' ? '핀을' : '리뷰를';
+  if (!(await dialog({ title: `이 ${what} 되살릴까요?`, body: t.kind === 'review' ? '숨김이 풀린 상태로 돌아가요.' : '핀만 돌아와요. 함께 지워진 리뷰는 따로 되살려야 해요.', ok: '되살리기' }))) return true;
+  const err = restoreTrash(t.id);
+  toast(err || `${what} 되살렸어요`);
+  return true;
+}
+
 // ---------- chrome: tab bar, icons, ?toast= ----------
 const TABS = [['홈', 'home.html', 'home'], ['피드', 'feed.html', 'feed'], ['마이페이지', 'me.html', 'user']];
 (function chrome() {

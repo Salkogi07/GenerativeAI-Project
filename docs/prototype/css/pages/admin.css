@@ -20,3 +20,15 @@
 .admin-seg button{flex:1 0 auto;padding:0 4px;font-size:14.5px;white-space:nowrap}
 .review-card .meta-end{display:flex;align-items:center;gap:8px;flex:none}
 .see-pin{display:inline-flex;align-items:center;font-weight:600;color:var(--brand)}
+/* 신고 번호 검색 · 신고 번호 · 휴지통 · 알림 · 이의 제기 */
+.admin-find{padding:10px 16px;border-bottom:1px solid var(--line);flex:none}
+.admin-find .search-box input{height:42px;font-size:16px}
+.report-nos{display:block;margin-top:2px;font-size:12.5px;color:var(--mute)}
+.review-card .photos{margin:-4px 0 12px}
+.notice-where{display:flex;align-items:center;gap:4px;margin-top:8px;font-size:13.5px;color:var(--sub)}
+.notice-help{padding:0 0 10px}
+.appeal-box{margin:0 0 12px;padding:12px 14px;border-radius:10px;background:var(--brand-weak);font-size:14px;line-height:1.55}
+.appeal-box.rejected{background:var(--surface)}
+.appeal-mine,.appeal-reply{margin-top:4px;color:var(--sub);white-space:pre-line}
+.appeal-reply{color:var(--text)}
+.admin-find .search-box{flex:1;min-height:44px;border-radius:22px}

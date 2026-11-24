@@ -66,7 +66,7 @@ $('#reviews').addEventListener('click', e => {
       $('[data-act=del]', w).onclick = async () => {
         close();
         if (!(await dialog({ title: '리뷰를 삭제할까요?', body: '삭제한 리뷰는 되돌릴 수 없어요.', ok: '삭제', danger: true }))) return;
-        save('reviews', reviews().filter(x => x.id !== r.id));
+        removeReview(r.id);
         renderReviews();
         toast('리뷰를 삭제했어요');
       };
@@ -79,8 +79,8 @@ $('#reviews').addEventListener('click', e => {
     $('[data-act=report]', w).onclick = () => { close(); if (needLogin()) openReport('review', r.id); };
     if (u?.admin) $('[data-act=del]', w).onclick = async () => {
       close();
-      if (!(await dialog({ title: '이 리뷰를 삭제할까요?', body: '운영자 권한으로 지워요. 되돌릴 수 없어요.', ok: '삭제', danger: true }))) return;
-      save('reviews', reviews().filter(x => x.id !== r.id));
+      if (!(await dialog({ title: '이 리뷰를 삭제할까요?', body: '운영자 권한으로 지워요. 휴지통에 7일 동안 보관돼요.' + (r.reports.length ? ' 신고된 리뷰라 작성자에게 알림이 가요.' : ''), ok: '삭제', danger: true }))) return;
+      removeReview(r.id);
       renderReviews();
       toast('리뷰를 삭제했어요');
     };
@@ -97,9 +97,8 @@ $('#pinMore').onclick = () => sheet(`<div class="menu-sheet">`
   $('[data-act=del]', w)?.addEventListener('click', async () => {
     close();
     const n = pinReviews(pin.id).length;
-    if (!(await dialog({ title: '이 핀을 삭제할까요?', body: `운영자 권한으로 지워요. 리뷰 ${n}개도 함께 지워지고 되돌릴 수 없어요.`, ok: '삭제', danger: true }))) return;
-    save('pins', pins().filter(x => x.id !== pin.id));
-    save('reviews', reviews().filter(x => x.pin !== pin.id));
+    if (!(await dialog({ title: '이 핀을 삭제할까요?', body: `운영자 권한으로 지워요. 리뷰 ${n}개도 함께 지워져요. 휴지통에 7일 동안 보관돼요.`, ok: '삭제', danger: true }))) return;
+    removePin(pin.id);
     go('home.html?toast=' + encodeURIComponent('핀을 삭제했어요'));
   });
 });
@@ -123,13 +122,13 @@ function openReport(kind, id) {
         const all = pins(), p = all.find(x => x.id === id);
         p.reports ||= [];
         if (p.reports.some(x => x.by === u.email)) return toast('이미 신고한 핀이에요');
-        p.reports.push({ by: u.email, reason, at: Date.now() });
+        p.reports.push({ id: nextReportNo(), by: u.email, reason, at: Date.now() });
         save('pins', all);
         return toast('신고했어요. 운영자가 확인할게요');
       }
       const all = reviews(), r = all.find(x => x.id === id);
       if (r.reports.some(x => x.by === u.email)) return toast('이미 신고한 리뷰예요');
-      r.reports.push({ by: u.email, reason, at: Date.now() });
+      r.reports.push({ id: nextReportNo(), by: u.email, reason, at: Date.now() });
       if (new Set(r.reports.map(x => x.by)).size >= 3) r.hidden = true; // 서로 다른 계정 3건 → 자동 숨김
       save('reviews', all);
       renderReviews();
