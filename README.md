@@ -8,9 +8,9 @@
 | 무엇 | 주소 | 데이터 |
 |---|---|---|
 | **메인 앱 (베타)** | 👉 <https://generative-ai-project-three.vercel.app/> | 실제 서버(Supabase)에 저장돼요. 내가 남긴 핀과 리뷰가 모두에게 보여요 |
-| 프로토타입 | <https://salkogi07.github.io/GenerativeAI-Project/> | 내 브라우저에만 저장되는 시연용이에요 |
+| 프로토타입 | <https://salkogi07.github.io/GenerativeAI-Project/docs/prototype/pages/> | 내 브라우저에만 저장되는 시연용이에요 |
 
-두 링크 모두 휴대폰 브라우저에서 바로 열려요. 휴대폰에서는 앱처럼 전체 화면으로 보이고, PC에서는 가운데에 휴대폰 폭으로 보여요. PC에서 휴대폰 크기로 보려면 Chrome에서 F12를 누르고 기기 툴바(Ctrl+Shift+M)를 켜세요.
+GitHub Pages 주소(<https://salkogi07.github.io/GenerativeAI-Project/>)로 들어오면 메인 앱으로 이동해요. 두 링크 모두 휴대폰 브라우저에서 바로 열려요. 휴대폰에서는 앱처럼 전체 화면으로 보이고, PC에서는 가운데에 휴대폰 폭으로 보여요. PC에서 휴대폰 크기로 보려면 Chrome에서 F12를 누르고 기기 툴바(Ctrl+Shift+M)를 켜세요.
 
 ### 메인 앱
 
@@ -66,8 +66,8 @@
 
 ### 프로토타입
 
-- **파일로 열기:** 저장소 맨 위의 `index.html`을 브라우저로 열면 돼요.
-- **로컬 서버로 열기:** 저장소 맨 위에서 아래 명령을 실행하고 <http://localhost:8000> 을 열어요.
+- **파일로 열기:** `docs/prototype/pages/index.html`을 브라우저로 열면 돼요.
+- **로컬 서버로 열기:** 저장소 맨 위에서 아래 명령을 실행하고 <http://localhost:8000/docs/prototype/pages/> 를 열어요.
 
   ```sh
   python -m http.server 8000
@@ -80,7 +80,7 @@
 ## 4. 파일 구조
 
 ```
-index.html          프로토타입 지도 홈으로 이동
+index.html          메인 앱(Vercel)으로 이동
 main/               메인 앱 (React + Vite + Supabase) · README.md(실행 방법)
 ├─ src/pages/       화면 (프로토타입 화면과 1:1)
 ├─ src/ui/          공통 UI · 지도
