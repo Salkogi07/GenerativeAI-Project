@@ -1,4 +1,4 @@
-.search-top{padding-right:16px}
+.search-top{padding-right:16px;height:68px} /* 위아래 12px 여백 */
 .search-box{flex:1;min-height:44px;border-radius:22px}
 .search-box input{height:42px;font-size:16px}
 .region-note{flex:none;padding:10px 20px;font-size:13px;color:var(--sub);background:var(--surface)}

@@ -229,7 +229,7 @@ ul{padding-left:18px}
 
 /* ---------- overlays ---------- */
 .dim{position:absolute;inset:0;background:rgba(17,19,24,.45);z-index:900;animation:fade .2s}
-.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:20px 20px 0 0;z-index:901;padding:8px 20px 20px;max-height:88%;overflow-y:auto;animation:rise .22s}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:20px 20px 0 0;z-index:901;padding:8px 20px calc(28px + env(safe-area-inset-bottom));max-height:88%;overflow-y:auto;animation:rise .22s}
 .sheet .grab{width:40px;height:4px;border-radius:2px;background:#d5d8de;margin:0 auto 16px;position:relative;touch-action:none;cursor:grab}
 .sheet .grab::after{content:"";position:absolute;inset:-14px -80px} /* 손잡이를 잡기 쉽게 누르는 범위를 넓힘 */
 .sheet h3{font-size:19px;font-weight:800;letter-spacing:-.3px}

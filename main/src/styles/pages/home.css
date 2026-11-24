@@ -3,7 +3,7 @@
 .search-pill .i{color:var(--text)}
 .map-top .chips{margin-top:10px;overflow:visible} /* 3개만 보여서 스크롤 없음 */
 .chip-more{width:36px;padding:0;justify-content:center;color:var(--text)}
-.cat-all{gap:8px;margin:14px 0 4px}
+.cat-all{gap:8px;margin:14px 0 8px}
 .sheet-head{display:flex;align-items:center;justify-content:space-between}
 .sheet-head button{font-size:15px;font-weight:700;color:var(--brand);padding:8px 0 8px 12px}
 .cat-all .chip:disabled{opacity:.4}
