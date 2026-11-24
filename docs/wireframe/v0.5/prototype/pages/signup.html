@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>회원가입 · Pin it!</title>
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/pages/auth.css">
+<link rel="stylesheet" href="../css/wireframe.css">
+</head>
+<body>
+<div class="phone"><div class="scr">
+  <div class="top"><button class="icon-btn" data-back="terms.html" aria-label="뒤로"><i data-i="back"></i></button><span class="ttl">회원가입</span></div>
+  <form class="body pad tight-top" id="f" novalidate data-guard>
+    <div class="steps"><i class="on"></i><i class="on"></i><i></i></div>
+    <div class="step-t">2 / 3 · 정보 입력</div>
+    <h1 class="h1">사용할 정보를 입력해 주세요</h1>
+
+    <div class="field"><label for="nick">닉네임</label>
+      <div class="control" id="cNick"><input id="nick" maxlength="12" autocomplete="nickname" placeholder="2~12자"><span class="aside num" id="nickCount">0/12</span></div>
+      <div class="hint" id="hNick">리뷰와 공개 리스트에 이메일 대신 보여요.</div></div>
+
+    <div class="field"><label for="email">이메일</label>
+      <div class="control" id="cEmail"><input id="email" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com"></div>
+      <div class="hint" id="hEmail">가입 후 이 주소로 인증 메일을 보내요.</div></div>
+
+    <div class="field"><label for="pw">비밀번호</label>
+      <div class="control"><input id="pw" type="password" autocomplete="new-password" placeholder="비밀번호"><button type="button" class="aside" data-reveal="pw">보기</button></div>
+      <div class="rules"><span id="rLen"><i data-i="check" class="xs"></i>8자 이상</span><span id="rMix"><i data-i="check" class="xs"></i>영문·숫자 포함</span></div></div>
+
+    <div class="field"><label for="pw2">비밀번호 확인</label>
+      <div class="control" id="cPw2"><input id="pw2" type="password" autocomplete="new-password" placeholder="한 번 더 입력"><button type="button" class="aside" data-reveal="pw2">보기</button></div>
+      <div class="hint" id="hPw2"></div></div>
+  </form>
+  <div class="cta"><button class="btn" id="submit" form="f" type="submit" disabled>가입하기</button></div>
+</div></div>
+<script src="../js/core.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/pages/auth.js"></script>
+<script src="../js/pages/signup.js"></script>
+</body>
+</html>

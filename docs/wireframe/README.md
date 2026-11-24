@@ -4,12 +4,33 @@ Pin it! 화면 설계를 버전별로 모았어요. 최신 버전이 맨 위에 
 
 | 버전 | 형태 | 화면 수 | 기준 기기 | 시작 파일 |
 |---|---|---|---|---|
+| v0.5 | 회색조 프로토타입 (동작함) | 18개 화면 | 모바일 웹 (360px~) | [v0.5/prototype/pages/index.html](v0.5/prototype/pages/index.html) |
 | v0.4 | 회색조 프로토타입 (동작함) | 18개 화면 | 모바일 웹 (360px~) | [v0.4/prototype/pages/index.html](v0.4/prototype/pages/index.html) |
 | v0.3 | 회색조 프로토타입 (동작함) | 16개 화면 | 모바일 웹 | [v0.3/prototype/pages/index.html](v0.3/prototype/pages/index.html) |
 | v0.2 | 클릭형 HTML (화면 1개 = 파일 1개) + 주석 PDF | 24개 화면·상태 | Galaxy S26 (360×780dp) | [v0.2/html/index.html](v0.2/html/index.html) |
 | v0.1 | HTML 파일 1개 | 15개 화면 | Galaxy S25 | [v0.1/pin it! wireframe 0.1.html](<v0.1/pin it! wireframe 0.1.html>) |
 
 모두 브라우저로 파일을 열면 바로 볼 수 있어요.
+
+---
+
+## v0.5: 회색조 프로토타입 (핀 신고·운영자 삭제 반영)
+
+v0.4와 같은 방식이에요. 지금 프로토타입을 다시 복사하고 [css/wireframe.css](v0.5/prototype/css/wireframe.css)를 붙였어요. 변경 이력 v1.9(2026-11-24) 기준이고, PRD v0.6이 이 화면 구성을 따라요.
+
+- 시작: [v0.5/prototype/pages/index.html](v0.5/prototype/pages/index.html)
+- 화면: v0.4와 같은 18개
+
+**v0.4 대비 바뀐 점**
+
+| 영역 | v0.4 | v0.5 |
+|---|---|---|
+| 핀 상세 | 위쪽에 홈·공유 | + ⋮ 메뉴: 남의 핀 신고, 운영자는 핀 삭제 |
+| 핀 신고 | 없음 | 바텀시트, 이유 4개 중 하나 |
+| 리뷰 ⋮ 메뉴 (운영자) | 신고하기 | + 리뷰 삭제 |
+| 리뷰 검토 탭 | AI 의심 · 신고 누적 · 미판정 | AI 의심 · 리뷰 신고 · 핀 신고 · 미판정 |
+| 리뷰 검토 카드 | 광고 라벨 · 숨김 · 문제없음 | + 삭제. 핀 신고 탭은 핀 보기 · 핀 삭제 |
+| 협찬·대가 체크 박스 | 긴 화면에서 눌려 글이 넘침 | 글이 박스 안에 들어감 |
 
 ---
 
