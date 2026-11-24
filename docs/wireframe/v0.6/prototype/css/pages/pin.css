@@ -1,0 +1,13 @@
+.pin-info{padding-bottom:16px}
+.pin-tags{display:flex;gap:6px;margin-bottom:10px}
+.pin-name{font-size:24px;font-weight:800;letter-spacing:-.5px}
+.pin-meta{font-size:13.5px;color:var(--sub);margin-top:4px;display:flex;gap:6px;flex-wrap:wrap}
+.pin-meta .text-link{font-size:13.5px}
+.pin-desc{font-size:15px;line-height:1.65;margin-top:14px;white-space:pre-wrap}
+.pin-desc.is-empty{color:var(--mute)}
+.pin-edit{margin-top:14px}
+.reviews-h{color:var(--text);font-size:17px;padding-bottom:4px}
+.reviews-h .order{font-size:13px;font-weight:500;color:var(--mute)}
+.like-btn{width:auto;padding:0 18px}
+.like-btn.liked{color:var(--brand)}
+.like-btn.liked .i{fill:var(--brand)}

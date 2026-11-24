@@ -41,7 +41,8 @@ GitHub Pages 주소(<https://salkogi07.github.io/GenerativeAI-Project/>)로 들�
 
 화면 설계를 버전별로 정리했어요. 자세한 화면 목록과 버전별 차이는 [docs/wireframe/README.md](docs/wireframe/README.md)에 있어요.
 
-- **v0.5 (최신):** v0.4에 핀 상세 ⋮ 메뉴(핀 신고, 운영자 핀 삭제)와 리뷰 검토 탭(리뷰 신고·핀 신고)을 반영했어요(18개 화면). → [열기](docs/wireframe/v0.5/prototype/pages/index.html)
+- **v0.6 (최신):** v0.5에 알림·이의 제기·휴지통 화면과 신고 번호 검색, 판정 완료 탭을 반영했어요(21개 화면). → [열기](docs/wireframe/v0.6/prototype/pages/index.html)
+- **v0.5:** v0.4에 핀 상세 ⋮ 메뉴(핀 신고, 운영자 핀 삭제)와 리뷰 검토 탭(리뷰 신고·핀 신고)을 반영했어요(18개 화면). → [열기](docs/wireframe/v0.5/prototype/pages/index.html)
 - **v0.4:** 지금 프로토타입을 회색조로 바꾼 와이어프레임이에요(18개 화면). 하단 탭 3개(홈·피드·마이페이지), 피드·지역 선택·내 활동, 지도 홈 카테고리 칩 3개 + 전체 보기 시트가 들어가 있어요. → [열기](docs/wireframe/v0.4/prototype/pages/index.html)
 - **v0.3:** 실제로 동작하는 프로토타입을 회색조로 바꾼 와이어프레임이에요(16개 화면). 핀 찍기, 리뷰, 찜, 공유를 직접 눌러 볼 수 있어요. → [열기](docs/wireframe/v0.3/prototype/pages/index.html)
 - **v0.2:** 화면마다 HTML 파일을 하나씩 만들고, 미인증·결과 없음·작성 제한 같은 상태도 따로 그렸어요(24개). 시작 화면과 약관 동의를 추가해 회원가입이 3단계가 됐어요. 화면별 주석이 달린 PDF도 있어요. → [열기](docs/wireframe/v0.2/html/index.html)
@@ -51,7 +52,8 @@ GitHub Pages 주소(<https://salkogi07.github.io/GenerativeAI-Project/>)로 들�
 
 서비스 목표, 기능 범위, 화면, 데이터, 테스트 기준을 정한 문서예요. 버전별 요약과 차이는 [docs/prd/README.md](docs/prd/README.md)에 있어요.
 
-- **v0.6 (최신, 11-24):** v0.5에 핀 신고와 운영자 핀·리뷰 삭제를 반영했어요. 리뷰 검토 탭 5개, pin_reports 테이블, 테스트 3건이 들어갔어요. → [열기](<docs/prd/Pin it! PRD v0.6.pdf>)
+- **v0.7 (최신, 11-24):** v0.6에 운영 처리 흐름을 반영했어요. 신고 번호 검색, 처리 알림·이의 제기, 휴지통 7일, 키워드 1차 판정, 운영자 처리 통일(광고 라벨·문제없음·삭제), 테스트 4건이 들어갔어요. → [열기](<docs/prd/Pin it! PRD v0.7.pdf>)
+- **v0.6 (11-24):** v0.5에 핀 신고와 운영자 핀·리뷰 삭제를 반영했어요. 리뷰 검토 탭 5개, pin_reports 테이블, 테스트 3건이 들어갔어요. → [열기](<docs/prd/Pin it! PRD v0.6.pdf>)
 - **v0.5 (11-24):** v0.4에 배포 뒤 휴대폰으로 써 보며 고친 화면을 반영했어요. 지도 홈 카테고리 칩 3개 + 전체 보기 시트와 칩 고르기, 시트 끌어내려 닫기, 좁은 화면·큰 글자·키보드 대응, 테스트 3건이 들어갔어요. → [열기](<docs/prd/Pin it! PRD v0.5.pdf>)
 - **v0.4 (11-23):** v0.3에 메인 앱 Vercel 배포를 반영했어요. 배포 주소, 자동 배포, 배포 환경에서 하는 기능 테스트, 비밀값 분리가 들어갔어요. → [열기](<docs/prd/Pin it! PRD v0.4.pdf>)
 - **v0.3 (11-19, 배포 전):** v0.2를 실제로 만든 메인 앱에 맞춰 고쳤어요. 장소 데이터(공공데이터·브이월드), 브이월드 지도, 하단 탭 3개, 운영자 카테고리 관리, 핀 협찬 표시, 기능별 구현 현황이 들어갔어요. → [열기](<docs/prd/Pin it! PRD v0.3.pdf>)
@@ -95,7 +97,7 @@ scripts/            build_places.py (공공데이터 → 장소 데이터)
 data/               raw/ 원본 공공데이터 · places.json · 좌표 캐시
 docs/
 ├─ CHANGELOG.md     변경 이력 (최신 버전이 위)
-├─ prd/             README.md(버전별 정리) · DECISIONS.md(PRD 이후 결정) · PRD v0.6 (최신) ~ v0.1 · source/(PDF 원본)
+├─ prd/             README.md(버전별 정리) · DECISIONS.md(PRD 이후 결정) · PRD v0.7 (최신) ~ v0.1 · source/(PDF 원본)
 ├─ prototype/
 │  ├─ pages/        화면 HTML (index.html → 지도 홈)
 │  ├─ css/          common.css(공통) · pages/(화면별)
@@ -105,7 +107,8 @@ docs/
    ├─ v0.2/html/    화면별 HTML 와이어프레임 · PDF
    ├─ v0.3/         회색조 프로토타입 (탭 4개 시절)
    ├─ v0.4/         회색조 프로토타입
-   └─ v0.5/         회색조 프로토타입 (최신)
+   ├─ v0.5/         회색조 프로토타입
+   └─ v0.6/         회색조 프로토타입 (최신)
 ```
 
 기획 문서 안내는 [docs/README.md](docs/README.md)에 있어요.
