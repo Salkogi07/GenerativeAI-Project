@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>설명 수정 · Pin it!</title>
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/wireframe.css">
+</head>
+<body>
+<div class="phone"><div class="scr">
+  <div class="top line"><button class="icon-btn" id="back" data-back="home.html" aria-label="뒤로"><i data-i="back"></i></button><span class="ttl">설명 수정</span></div>
+  <div class="body pad" data-guard>
+    <div class="context-label">핀</div>
+    <div class="context-name" id="name"></div>
+    <div class="field"><label for="desc">설명</label>
+      <div class="control area"><textarea id="desc" rows="7" maxlength="500" placeholder="이 장소를 어떻게 쓰면 좋은지 적어 주세요. 예: 콘센트 자리, 붐비는 시간"></textarea></div>
+      <div class="count num" id="count">0 / 500</div></div>
+  </div>
+  <div class="cta"><button class="btn" id="save">저장</button></div>
+</div></div>
+<script src="../js/core.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/pages/pin-edit.js"></script>
+</body>
+</html>

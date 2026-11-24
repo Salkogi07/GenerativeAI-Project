@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>리뷰 쓰기 · Pin it!</title>
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/pages/review-new.css">
+<link rel="stylesheet" href="../css/wireframe.css">
+</head>
+<body>
+<div class="phone"><div class="scr">
+  <div class="top line"><button class="icon-btn" id="back" data-back="home.html" aria-label="뒤로"><i data-i="back"></i></button><span class="ttl">리뷰 쓰기</span></div>
+  <div class="body pad" data-guard>
+    <div class="context-label">리뷰할 곳</div>
+    <div class="context-name" id="name"></div>
+
+    <div class="notice warn gap-b" id="blocked" hidden><b id="bT"></b><div class="s" id="bS"></div><a class="btn sm line" id="bA" hidden></a></div>
+
+    <div id="form">
+      <div class="field"><label for="body">리뷰</label>
+        <div class="control area"><textarea id="body" rows="6" maxlength="1000" placeholder="직접 다녀온 경험을 적어 주세요. 좋았던 점, 아쉬운 점, 붐비는 시간 등"></textarea></div>
+        <div class="count num" id="count">0 / 1000</div></div>
+
+      <label class="check boxed ad-check">
+        <input type="checkbox" id="ad"><span class="box"><i data-i="check"></i></span>
+        <span class="fl"><b>협찬·대가를 받았어요</b><span class="note">돈·제품·할인을 받았다면 꼭 체크해 주세요. 리뷰 맨 위에 표시가 붙어요.</span>
+          <span class="ad-preview" id="adPreview" hidden><span class="ad-label">협찬·광고</span></span></span>
+      </label>
+
+      <div class="field"><span class="label">사진 <span class="opt-note">· 선택, 최대 3장 · 장당 5MB · JPG·PNG·WebP</span></span>
+        <div class="photos flush" id="photos"></div>
+        <input type="file" id="file" accept="image/jpeg,image/png,image/webp" multiple hidden>
+        <div class="hint bad" id="photoErr"></div>
+        <label class="check own-check" id="ownWrap" hidden><input type="checkbox" id="own"><span class="box"><i data-i="check"></i></span><span class="fl">직접 찍은 사진이에요 <span class="req">필수</span></span></label>
+      </div>
+    </div>
+  </div>
+  <div class="cta"><button class="btn" id="submit" disabled>등록</button></div>
+</div></div>
+<script src="../js/core.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/pages/review-new.js"></script>
+</body>
+</html>

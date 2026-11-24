@@ -1,0 +1,13 @@
+/* 로그인 · 약관 동의 · 회원가입 · 이메일 인증 */
+.login-title{margin-bottom:28px}
+.submit{margin-top:8px}
+.switch-auth{text-align:center;margin-top:20px;font-size:14px;color:var(--sub)}
+
+.agree-all{background:var(--surface);border-radius:var(--r);padding:0 16px;margin-bottom:8px}
+.agree-all b{font-size:16px}
+.agree-all .note,.agree-row .note{font-size:12.5px;color:var(--sub)}
+.agree-row{display:flex;align-items:center}
+.agree-list{padding:0 4px}
+
+.mail-card{display:flex;gap:12px;align-items:center}
+.tips{font-size:13.5px;color:var(--sub);line-height:1.9;margin-top:18px}

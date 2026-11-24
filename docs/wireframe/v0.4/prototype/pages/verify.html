@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>이메일 인증 · Pin it!</title>
+<link rel="stylesheet" href="../css/common.css">
+<link rel="stylesheet" href="../css/pages/auth.css">
+<link rel="stylesheet" href="../css/wireframe.css">
+</head>
+<body>
+<div class="phone"><div class="scr">
+  <div class="top"><button class="icon-btn" data-back="signup.html" aria-label="뒤로"><i data-i="back"></i></button><span class="ttl">회원가입</span></div>
+  <div class="body pad tight-top">
+    <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+    <div class="step-t">3 / 3 · 이메일 인증</div>
+    <h1 class="h1">메일함에서 인증 링크를<br>눌러 주세요</h1>
+    <div class="notice info mail-card">
+      <span class="thumb tint md"><i data-i="mail"></i></span>
+      <div class="fl"><b class="ell" id="mail"></b><div class="s">으로 인증 메일을 보냈어요</div></div>
+    </div>
+    <ul class="tips">
+      <li>메일이 보이지 않으면 스팸함을 확인해 주세요.</li>
+      <li>인증 링크는 24시간 동안 쓸 수 있어요.</li>
+    </ul>
+    <div class="grow"></div>
+    <button class="btn sec" id="resend">인증 메일 다시 보내기</button>
+    <button class="text-link center" id="change">이메일 주소 바꾸기</button>
+  </div>
+  <div class="cta"><button class="btn" id="done">인증 완료하고 로그인하기</button></div>
+</div></div>
+<script src="../js/core.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/pages/auth.js"></script>
+<script src="../js/pages/verify.js"></script>
+</body>
+</html>

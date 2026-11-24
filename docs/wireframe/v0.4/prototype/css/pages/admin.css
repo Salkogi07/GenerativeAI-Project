@@ -1,0 +1,16 @@
+.review-card{padding:20px;border-bottom:8px solid var(--surface)}
+.review-card .meta{display:flex;justify-content:space-between;font-size:13px;color:var(--sub)}
+.review-card .meta b{color:var(--text)}
+.review-card .ad-label{margin-top:10px}
+.review-card .quote{font-size:15px;line-height:1.6;margin:10px 0 14px;padding:14px;background:var(--surface);border-radius:10px}
+.ai-box{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.ai-head{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700}
+.ai-head .score{margin-left:auto;color:var(--ad)}
+.ai-head .none{margin-left:auto;color:var(--mute)}
+.ai-reason{font-size:13.5px;color:var(--sub);margin-top:8px}
+.conf{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:6px}
+.conf i{display:block;height:100%;background:var(--ad);border-radius:3px}
+.report-line{font-size:13.5px;margin-bottom:12px}
+.report-line span{color:var(--sub)}
+.decide{display:flex;gap:6px}
+.decide .btn{flex:1}
