@@ -1,4 +1,4 @@
-// 핀 상세: 정보·설명, 리뷰 목록(협찬·광고 라벨, 신고 숨김), 리뷰 메뉴 → 신고 시트, 찜하기 시트.
+// 핀 상세: 정보·설명, 리뷰 목록(협찬·광고 라벨, 신고 숨김), 핀·리뷰 메뉴 → 신고 시트(운영자는 삭제), 찜하기 시트.
 const pin = pinById(qs.get('id'));
 const u = me();
 if (!pin) { $('#page').hidden = $('#cta').hidden = true; $('#gone').hidden = false; throw new Error('pin not found'); }
@@ -54,8 +54,9 @@ $('#share').onclick = async () => {
   } catch { /* 사용자가 공유를 취소 */ }
 };
 
-// ---------- 리뷰 메뉴 → 삭제(내 리뷰) / 신고(남의 리뷰) ----------
-const REASONS = ['광고인데 표시가 없어요', '허위 정보예요', '욕설·비방이 있어요', '기타'];
+// ---------- 리뷰 메뉴 → 삭제(내 리뷰) / 신고(남의 리뷰), 운영자는 남의 리뷰도 삭제 ----------
+const REASONS = { review: ['광고인데 표시가 없어요', '허위 정보예요', '욕설·비방이 있어요', '기타'],
+  pin: ['광고인데 표시가 없어요', '허위 정보예요', '부적절한 내용이에요', '기타'] };
 $('#reviews').addEventListener('click', e => {
   const b = e.target.closest('[data-more]');
   if (!b) return;
@@ -72,15 +73,42 @@ $('#reviews').addEventListener('click', e => {
     });
     return;
   }
-  sheet(`<div class="menu-sheet"><button data-act="report">${icon('flag')}신고하기</button><button data-close>${icon('close')}닫기</button></div>`, (w, close) => {
-    $('[data-act=report]', w).onclick = () => { close(); if (needLogin()) openReport(r.id); };
+  sheet(`<div class="menu-sheet"><button data-act="report">${icon('flag')}신고하기</button>`
+    + (u?.admin ? `<button class="danger" data-act="del">${icon('trash')}리뷰 삭제 (운영자)</button>` : '')
+    + `<button data-close>${icon('close')}닫기</button></div>`, (w, close) => {
+    $('[data-act=report]', w).onclick = () => { close(); if (needLogin()) openReport('review', r.id); };
+    if (u?.admin) $('[data-act=del]', w).onclick = async () => {
+      close();
+      if (!(await dialog({ title: '이 리뷰를 삭제할까요?', body: '운영자 권한으로 지워요. 되돌릴 수 없어요.', ok: '삭제', danger: true }))) return;
+      save('reviews', reviews().filter(x => x.id !== r.id));
+      renderReviews();
+      toast('리뷰를 삭제했어요');
+    };
   });
 });
 
-function openReport(rid) {
+// ---------- 핀 메뉴 → 신고(남의 핀), 운영자는 핀 삭제(리뷰도 함께) ----------
+$('#pinMore').hidden = isMine && !u?.admin;
+$('#pinMore').onclick = () => sheet(`<div class="menu-sheet">`
+  + (isMine ? '' : `<button data-act="report">${icon('flag')}핀 신고하기</button>`)
+  + (u?.admin ? `<button class="danger" data-act="del">${icon('trash')}핀 삭제 (운영자)</button>` : '')
+  + `<button data-close>${icon('close')}닫기</button></div>`, (w, close) => {
+  $('[data-act=report]', w)?.addEventListener('click', () => { close(); if (needLogin()) openReport('pin', pin.id); });
+  $('[data-act=del]', w)?.addEventListener('click', async () => {
+    close();
+    const n = pinReviews(pin.id).length;
+    if (!(await dialog({ title: '이 핀을 삭제할까요?', body: `운영자 권한으로 지워요. 리뷰 ${n}개도 함께 지워지고 되돌릴 수 없어요.`, ok: '삭제', danger: true }))) return;
+    save('pins', pins().filter(x => x.id !== pin.id));
+    save('reviews', reviews().filter(x => x.pin !== pin.id));
+    go('home.html?toast=' + encodeURIComponent('핀을 삭제했어요'));
+  });
+});
+
+// 리뷰 신고: 서로 다른 계정 3건이면 자동 숨김. 핀 신고: 운영자가 보고 지워요(자동 숨김 없음).
+function openReport(kind, id) {
   let reason = '';
-  sheet(`<h3>리뷰 신고</h3><p class="lead">신고 이유를 골라 주세요. 신고한 사람은 공개되지 않아요.</p>
-    <div data-reasons>${REASONS.map(x => `<button class="check" data-r="${x}"><span class="radio"></span><span class="fl">${x}</span></button>`).join('')}</div>
+  sheet(`<h3>${kind === 'pin' ? '핀' : '리뷰'} 신고</h3><p class="lead">신고 이유를 골라 주세요. 신고한 사람은 공개되지 않아요.</p>
+    <div data-reasons>${REASONS[kind].map(x => `<button class="check" data-r="${x}"><span class="radio"></span><span class="fl">${x}</span></button>`).join('')}</div>
     <div class="acts"><button class="btn sec fixed-w" data-close>취소</button><button class="btn" data-send disabled>신고하기</button></div>`, (w, close) => {
     $('[data-reasons]', w).onclick = e => {
       const b = e.target.closest('[data-r]');
@@ -90,8 +118,16 @@ function openReport(rid) {
       $('[data-send]', w).disabled = false;
     };
     $('[data-send]', w).onclick = () => {
-      const all = reviews(), r = all.find(x => x.id === rid);
       close();
+      if (kind === 'pin') {
+        const all = pins(), p = all.find(x => x.id === id);
+        p.reports ||= [];
+        if (p.reports.some(x => x.by === u.email)) return toast('이미 신고한 핀이에요');
+        p.reports.push({ by: u.email, reason, at: Date.now() });
+        save('pins', all);
+        return toast('신고했어요. 운영자가 확인할게요');
+      }
+      const all = reviews(), r = all.find(x => x.id === id);
       if (r.reports.some(x => x.by === u.email)) return toast('이미 신고한 리뷰예요');
       r.reports.push({ by: u.email, reason, at: Date.now() });
       if (new Set(r.reports.map(x => x.by)).size >= 3) r.hidden = true; // 서로 다른 계정 3건 → 자동 숨김

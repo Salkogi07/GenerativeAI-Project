@@ -1,8 +1,8 @@
-// 리뷰 검토 (운영자 전용): AI 의심·신고·미판정 대기열, 광고 라벨/숨김/문제없음 처리 + 되돌리기. 카테고리 관리.
+// 리뷰 검토 (운영자 전용): AI 의심·신고·미판정 대기열, 광고 라벨/숨김/문제없음/삭제 처리 + 되돌리기. 핀 신고(핀 삭제). 카테고리 관리.
 // AI 판정은 review_ai_checks(운영자만 읽기). 판정 Edge Function을 붙이기 전까지는 비어 있어요.
 import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { aiChecks, cats, fmtDate, me, nickOf, pinById, reviews, run, useStore } from '../lib/store.js';
+import { aiChecks, cats, fmtDate, me, nickOf, pinById, pinReviews, pins, reviews, run, useStore } from '../lib/store.js';
 import { supabase } from '../supabase.js';
 import { AdLabel, BackBtn, Icon, Screen, ui } from '../ui/kit.jsx';
 
@@ -15,7 +15,12 @@ function queue(name) {
     .map(x => ({ queue: name, confidence: x.confidence, reason: x.reason || (name === 'pending' ? 'AI 판정 호출에 실패해 미판정으로 남았어요.' : ''), review: rs.find(r => r.id === x.review_id) }))
     .filter(x => x.review);
 }
-const TABS = [['ai', 'AI 의심'], ['report', '신고'], ['pending', '미판정'], ['cat', '카테고리']];
+const TABS = [['ai', 'AI 의심'], ['report', '신고'], ['pin', '핀 신고'], ['pending', '미판정'], ['cat', '카테고리']];
+// 신고된 핀, 신고 많은 순
+const reportedPins = () => pins().filter(p => p.reports.length).sort((a, b) => b.reports.length - a.reports.length);
+const countReasons = list => Object.entries(list.reduce((a, y) => { a[y.reason] = (a[y.reason] || 0) + 1; return a; }, {}));
+// RLS가 막으면 오류 없이 0행이 지워져서, 지워진 행이 없으면 실패로 봐요
+const del = async (table, id) => { const { data, error } = await run(supabase.from(table).delete().eq('id', id).select('id')); return !error && data?.length > 0; };
 const DONE = { label: '광고 라벨을 붙였어요', hide: '리뷰를 숨겼어요', ok: '문제없음으로 처리했어요' };
 
 export default function Admin() {
@@ -36,12 +41,16 @@ export default function Admin() {
     if ((await set({ ...patch, admin_decision: act })).error) return ui.toast('처리하지 못했어요. 다시 시도해 주세요');
     ui.toast(DONE[act], { label: '되돌리기', fn: () => set(before) });
   };
-  const items = q === 'cat' ? [] : queue(q);
+  const removeReview = async r => {
+    if (!(await ui.dialog({ title: '이 리뷰를 삭제할까요?', body: '되돌릴 수 없어요.', ok: '삭제', danger: true }))) return;
+    ui.toast(await del('reviews', r.id) ? '리뷰를 삭제했어요' : '삭제하지 못했어요. 다시 시도해 주세요');
+  };
+  const items = q === 'cat' || q === 'pin' ? [] : queue(q);
   return <Screen title="리뷰 검토">
     <div className="top line"><BackBtn to="/me" /><span className="ttl">리뷰 검토</span></div>
-    <div className="seg">{TABS.map(([k, n]) => <button key={k} className={q === k ? 'on' : ''} onClick={() => setQ(k)}>{n}<span className="n num">{k === 'cat' ? cats().length : queue(k).length}</span></button>)}</div>
-    {q === 'cat' ? <CatAdmin /> : <div className="body">{items.length ? items.map(x => { const r = x.review, p = pinById(r.pin);
-      const reasons = Object.entries(r.reports.reduce((a, y) => { a[y.reason] = (a[y.reason] || 0) + 1; return a; }, {}));
+    <div className="seg admin-seg">{TABS.map(([k, n]) => <button key={k} className={q === k ? 'on' : ''} onClick={() => setQ(k)}>{n}<span className="n num">{k === 'cat' ? cats().length : k === 'pin' ? reportedPins().length : queue(k).length}</span></button>)}</div>
+    {q === 'cat' ? <CatAdmin /> : q === 'pin' ? <PinReports /> : <div className="body">{items.length ? items.map(x => { const r = x.review, p = pinById(r.pin);
+      const reasons = countReasons(r.reports);
       return <div className="review-card" key={r.id}>
         <div className="meta"><span><b>{p?.name || '삭제된 핀'}</b> · {nickOf(r.by)} · {fmtDate(r.at)}</span>{r.hidden && <span className="tag">숨김 중</span>}</div>
         <AdLabel r={r} />
@@ -53,10 +62,27 @@ export default function Admin() {
         {reasons.length > 0 && <div className="report-line"><b>신고 {r.reports.length}건</b> · <span>{reasons.map(([k, n]) => `${k} ${n}`).join(', ')}</span></div>}
         <div className="decide"><button className="btn sm" onClick={() => decide(r.id, 'label')}>광고 라벨</button>
           <button className="btn sm sec" onClick={() => decide(r.id, 'hide')}>숨김</button>
-          <button className="btn sm line" onClick={() => decide(r.id, 'ok')}>문제없음</button></div>
+          <button className="btn sm line" onClick={() => decide(r.id, 'ok')}>문제없음</button>
+          <button className="btn sm line danger-line" onClick={() => removeReview(r)}>삭제</button></div>
       </div>; })
       : <div className="empty"><span className="ic"><Icon n="check" /></span><div className="t">검토할 리뷰가 없어요</div><div className="s">새로 들어오면 여기에 보여요.</div></div>}</div>}
   </Screen>;
+}
+
+// 핀 신고: 핀은 숨김 칸이 없어서(D18) 운영자가 보고 지워요. 지우면 리뷰·신고도 함께 지워져요.
+function PinReports() {
+  const list = reportedPins();
+  const remove = async p => {
+    if (!(await ui.dialog({ title: `"${p.name}" 핀을 삭제할까요?`, body: `리뷰 ${pinReviews(p.id).length}개도 함께 지워지고 되돌릴 수 없어요.`, ok: '삭제', danger: true }))) return;
+    ui.toast(await del('pins', p.id) ? '핀을 삭제했어요' : '삭제하지 못했어요. 다시 시도해 주세요');
+  };
+  return <div className="body">{list.length ? list.map(p => <div className="review-card" key={p.id}>
+    <div className="meta"><span><b>{p.name}</b> · {nickOf(p.author)} · {fmtDate(p.created)}</span></div>
+    <p className="quote">{p.desc || '설명이 없어요.'}</p>
+    <div className="report-line"><b>신고 {p.reports.length}건</b> · <span>{countReasons(p.reports).map(([k, n]) => `${k} ${n}`).join(', ')}</span></div>
+    <div className="decide"><Link className="btn sm line" to={`/pin?id=${p.id}`}>핀 보기</Link>
+      <button className="btn sm line danger-line" onClick={() => remove(p)}>핀 삭제</button></div>
+  </div>) : <div className="empty"><span className="ic"><Icon n="check" /></span><div className="t">신고된 핀이 없어요</div><div className="s">새로 들어오면 여기에 보여요.</div></div>}</div>;
 }
 
 // 카테고리: 지도 핀 안에 아이콘(이모지)으로 보여요. 핀이 쓰는 카테고리는 지울 수 없어요(서버 외래키).

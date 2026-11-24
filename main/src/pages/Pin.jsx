@@ -1,4 +1,4 @@
-// 핀 상세: 정보·설명, 리뷰 목록(협찬·광고 라벨, 신고 숨김), 리뷰 메뉴 → 신고 시트, 찜하기 시트.
+// 핀 상세: 정보·설명, 리뷰 목록(협찬·광고 라벨, 신고 숨김), 핀·리뷰 메뉴 → 신고 시트(운영자는 삭제), 찜하기 시트.
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { catIcon, likeCount, lists, me, nickOf, pinById, pinReviews, refresh, reviews, run, useStore } from '../lib/store.js';
@@ -6,7 +6,14 @@ import { supabase } from '../supabase.js';
 import { AdLabel, BackBtn, Icon, MapGrip, Photo, ReviewCard, Screen, ui, useNeedLogin } from '../ui/kit.jsx';
 import { L, markerIcon, useMap } from '../ui/map.js';
 
-const REASONS = ['광고인데 표시가 없어요', '허위 정보예요', '욕설·비방이 있어요', '기타'];
+const REASONS = { review: ['광고인데 표시가 없어요', '허위 정보예요', '욕설·비방이 있어요', '기타'],
+  pin: ['광고인데 표시가 없어요', '허위 정보예요', '부적절한 내용이에요', '기타'] }; // pin_reports.reason check와 같아야 해요
+
+// 운영자 삭제: RLS가 막으면 오류 없이 0행이 지워져서, 지워진 행이 없으면 실패로 봐요
+async function adminDelete(table, id) {
+  const { data, error } = await run(supabase.from(table).delete().eq('id', id).select('id'));
+  return !error && data?.length > 0;
+}
 
 export default function Pin() {
   useStore();
@@ -33,7 +40,7 @@ export default function Pin() {
     const to = `/review-new?pin=${pin.id}`;
     if (needLogin(to)) nav(to);
   };
-  // 리뷰 메뉴 → 삭제(내 리뷰) / 신고(남의 리뷰)
+  // 리뷰 메뉴 → 삭제(내 리뷰) / 신고(남의 리뷰), 운영자는 남의 리뷰도 삭제
   const more = r => {
     if (u && u.id === r.by) return ui.sheet(close => <div className="menu-sheet">
       <button className="danger" onClick={async () => {
@@ -44,15 +51,31 @@ export default function Pin() {
       }}><Icon n="trash" />내 리뷰 삭제</button>
       <button onClick={close}><Icon n="close" />닫기</button></div>);
     ui.sheet(close => <div className="menu-sheet">
-      <button onClick={() => { close(); if (needLogin()) ui.sheet(c => <ReportSheet rid={r.id} close={c} />); }}><Icon n="flag" />신고하기</button>
+      <button onClick={() => { close(); if (needLogin()) ui.sheet(c => <ReportSheet kind="review" id={r.id} close={c} />); }}><Icon n="flag" />신고하기</button>
+      {u?.admin && <button className="danger" onClick={async () => {
+        close();
+        if (!(await ui.dialog({ title: '이 리뷰를 삭제할까요?', body: '운영자 권한으로 지워요. 되돌릴 수 없어요.', ok: '삭제', danger: true }))) return;
+        ui.toast(await adminDelete('reviews', r.id) ? '리뷰를 삭제했어요' : '삭제하지 못했어요. 다시 시도해 주세요');
+      }}><Icon n="trash" />리뷰 삭제 (운영자)</button>}
       <button onClick={close}><Icon n="close" />닫기</button></div>);
   };
+  // 핀 메뉴 → 신고(남의 핀), 운영자는 핀 삭제(리뷰도 함께 지워져요)
+  const pinMore = () => ui.sheet(close => <div className="menu-sheet">
+    {!isMine && <button onClick={() => { close(); if (needLogin()) ui.sheet(c => <ReportSheet kind="pin" id={pin.id} close={c} />); }}><Icon n="flag" />핀 신고하기</button>}
+    {u?.admin && <button className="danger" onClick={async () => {
+      close();
+      if (!(await ui.dialog({ title: '이 핀을 삭제할까요?', body: `운영자 권한으로 지워요. 리뷰 ${rs.length}개도 함께 지워지고 되돌릴 수 없어요.`, ok: '삭제', danger: true }))) return;
+      if (await adminDelete('pins', pin.id)) nav('/home?toast=' + encodeURIComponent('핀을 삭제했어요'), { replace: true });
+      else ui.toast('삭제하지 못했어요. 다시 시도해 주세요');
+    }}><Icon n="trash" />핀 삭제 (운영자)</button>}
+    <button onClick={close}><Icon n="close" />닫기</button></div>);
   const like = () => { if (needLogin()) ui.sheet(close => <LikeSheet pin={pin} close={close} />); };
 
   return <Screen nav="홈" title={pin.name}>
     <div className="top"><BackBtn to="/home" /><span className="ttl" />
       <Link className="icon-btn" to="/home" aria-label="지도 홈으로"><Icon n="home" /></Link>
-      <button className="icon-btn" aria-label="공유" onClick={share}><Icon n="share" /></button></div>
+      <button className="icon-btn" aria-label="공유" onClick={share}><Icon n="share" /></button>
+      {(!isMine || u?.admin) && <button className="icon-btn" aria-label="핀 메뉴" onClick={pinMore}><Icon n="more" /></button>}</div>
     <div className="body">
       <PinMap pin={pin} />
       <div className="pad pin-info">
@@ -95,20 +118,22 @@ function PinMap({ pin }) {
   return <><div className="map h150" ref={ref} /><MapGrip mapRef={ref} map={map} /></>;
 }
 
-function ReportSheet({ rid, close }) {
+// 리뷰 신고: 서로 다른 계정 3건이면 서버(트리거)가 자동으로 숨겨요. 핀 신고: 운영자가 보고 지워요(자동 숨김 없음).
+function ReportSheet({ kind, id, close }) {
   const [reason, setReason] = useState('');
-  // 서로 다른 계정 3건이면 서버(트리거)가 자동으로 숨겨요
+  const what = kind === 'pin' ? '핀' : '리뷰', already = `이미 신고한 ${kind === 'pin' ? '핀이에요' : '리뷰예요'}`;
   const send = async () => {
-    const u = me(), r = reviews().find(x => x.id === rid);
+    const u = me(), target = kind === 'pin' ? pinById(id) : reviews().find(x => x.id === id);
     close();
-    if (r?.reports.some(x => x.by === u.id)) return ui.toast('이미 신고한 리뷰예요');
-    const { error } = await run(supabase.from('reports').insert({ review_id: rid, reason }));
-    if (error) return ui.toast(error.code === '23505' ? '이미 신고한 리뷰예요' : '신고하지 못했어요. 다시 시도해 주세요');
-    const hid = !reviews().some(x => x.id === rid && !x.hidden);
+    if (target?.reports.some(x => x.by === u.id)) return ui.toast(already);
+    const { error } = await run(kind === 'pin' ? supabase.from('pin_reports').insert({ pin_id: id, reason })
+      : supabase.from('reports').insert({ review_id: id, reason }));
+    if (error) return ui.toast(error.code === '23505' ? already : '신고하지 못했어요. 다시 시도해 주세요');
+    const hid = kind === 'review' && !reviews().some(x => x.id === id && !x.hidden);
     ui.toast(hid ? '신고가 쌓여 리뷰를 가렸어요. 운영자가 검토해요' : '신고했어요. 운영자가 확인할게요');
   };
-  return <><h3>리뷰 신고</h3><p className="lead">신고 이유를 골라 주세요. 신고한 사람은 공개되지 않아요.</p>
-    <div>{REASONS.map(x => <button key={x} className={`check ${reason === x ? 'on' : ''}`} onClick={() => setReason(x)}><span className="radio" /><span className="fl">{x}</span></button>)}</div>
+  return <><h3>{what} 신고</h3><p className="lead">신고 이유를 골라 주세요. 신고한 사람은 공개되지 않아요.</p>
+    <div>{REASONS[kind].map(x => <button key={x} className={`check ${reason === x ? 'on' : ''}`} onClick={() => setReason(x)}><span className="radio" /><span className="fl">{x}</span></button>)}</div>
     <div className="acts"><button className="btn sec fixed-w" onClick={close}>취소</button><button className="btn" disabled={!reason} onClick={send}>신고하기</button></div></>;
 }
 

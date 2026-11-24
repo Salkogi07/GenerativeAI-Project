@@ -41,7 +41,7 @@ export async function refresh() {
   if (!supabase) { S.ready = true; return changed(); }
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user || null, admin = user?.app_metadata?.role === 'admin';
-  const [p, r, l, pr, lk, rp, ai, ct] = await Promise.all([
+  const [p, r, l, pr, lk, rp, ai, ct, pp] = await Promise.all([
     supabase.from('pins').select('*'),
     supabase.from('reviews').select('*'),
     supabase.from('lists').select('*'),
@@ -50,8 +50,9 @@ export async function refresh() {
     user ? supabase.from('reports').select('review_id,reporter,reason') : { data: [] },
     admin ? supabase.from('review_ai_checks').select('*') : { data: [] },
     supabase.from('categories').select('name,icon').order('sort').order('name'),
+    user ? supabase.from('pin_reports').select('pin_id,reporter,reason') : { data: [] },
   ]);
-  const err = [p, r, l, pr, lk, rp, ai, ct].find(x => x.error)?.error;
+  const err = [p, r, l, pr, lk, rp, ai, ct, pp].find(x => x.error)?.error;
   if (err) throw err;
   const reps = rp.data;
   S = {
@@ -59,7 +60,8 @@ export async function refresh() {
     nick: new Map(pr.data.map(x => [x.id, x])),
     likes: new Map(lk.data.map(x => [x.pin_id, Number(x.n)])),
     pins: p.data.map(x => ({ id: x.id, name: x.name, cat: x.cat, kind: x.place_id ? '장소' : '위치', placeId: x.place_id, lat: x.lat, lng: x.lng,
-      desc: x.description, photos: x.photos, ad: x.ad, author: x.author, created: t(x.created_at) })),
+      desc: x.description, photos: x.photos, ad: x.ad, author: x.author, created: t(x.created_at),
+      reports: pp.data.filter(y => y.pin_id === x.id).map(y => ({ by: y.reporter, reason: y.reason })) })),
     reviews: r.data.map(x => ({ id: x.id, pin: x.pin_id, by: x.author, body: x.body, ad: x.ad, photos: x.photos, hidden: x.hidden,
       adminLabel: x.admin_label, decision: x.admin_decision, reportCount: x.report_count, at: t(x.created_at),
       reports: reps.filter(y => y.review_id === x.id).map(y => ({ by: y.reporter, reason: y.reason })) })),
