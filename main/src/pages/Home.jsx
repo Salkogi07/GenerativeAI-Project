@@ -44,6 +44,16 @@ export default function Home() {
     }, () => fallback('위치 권한이 없어 내 위치로 옮기지 못했어요'), { timeout: 6000 });
   };
 
+  // 칩은 3개만: 시트에서 고른 카테고리가 앞 3개에 없으면 맨 앞에 보여 줘요
+  const cs = cats(), top = cs.slice(0, 3);
+  const shown = !cat || top.some(c => c.name === cat) ? top : [cs.find(c => c.name === cat), ...top.slice(0, 2)].filter(Boolean);
+  const pickCat = () => ui.sheet(close => <><h3>카테고리</h3>
+    <div className="chips wrap cat-all" role="radiogroup" aria-label="카테고리 전체">
+      {[{ name: '전체', icon: '' }, ...cs].map(({ name: c, icon }) => { const v = c === '전체' ? '' : c;
+        return <button key={c} className={`chip ${cat === v ? 'on' : ''}`} role="radio" aria-checked={cat === v}
+          onClick={() => { setCat(v); close(); }}>{icon && `${icon} `}{c}</button>; })}
+    </div></>);
+
   const ph = sel ? placePhotos(sel) : [], rs = sel ? pinReviews(sel.id).filter(r => !r.hidden).slice(0, 2) : [];
   return <Screen nav="홈" title="지도">
     <div className="top"><span className="brand">Pin it!</span>
@@ -52,9 +62,9 @@ export default function Home() {
       <div className="float map-top">
         <Link className="search-pill" to="/search"><Icon n="search" />장소, 키워드, 리스트 검색</Link>
         <div className="chips" role="radiogroup" aria-label="카테고리">
-          {[{ name: '전체', icon: '' }, ...cats()].map(({ name: c, icon }) => { const v = c === '전체' ? '' : c;
-            return <button key={c} className={`chip raised ${cat === v ? 'on' : ''}`} role="radio" aria-checked={cat === v}
-              onClick={() => setCat(cat === v ? '' : v)}>{icon && `${icon} `}{c}</button>; })}
+          {shown.map(({ name: c, icon }) => <button key={c} className={`chip raised ${cat === c ? 'on' : ''}`} role="radio" aria-checked={cat === c}
+            onClick={() => setCat(cat === c ? '' : c)}>{icon && `${icon} `}{c}</button>)}
+          {cs.length > 3 && <button className="chip raised chip-more" aria-label="카테고리 전체 보기" onClick={pickCat}><Icon n="feed" cls="sm" /></button>}
         </div>
       </div>
       {!sel && <button className="float fab fab-loc" aria-label="내 위치로 이동" onClick={locate}><Icon n="locate" /></button>}
