@@ -1,7 +1,7 @@
 // 지도 홈: 공개 핀 지도, 카테고리 칩, 핀 미리보기 카드, 내 위치, 핀 찍기.
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ago, cats, likeCount, me, nickOf, pinKind, pinReviews, pins, placePhotos, region as curRegion, useStore, visibleCount } from '../lib/store.js';
+import { DB, ago, cats, likeCount, me, nickOf, pinKind, pinReviews, pins, placePhotos, region as curRegion, useStore, visibleCount } from '../lib/store.js';
 import { AdLabel, Icon, Photo, Screen, ui, useNeedLogin } from '../ui/kit.jsx';
 import { addPins, markerIcon, useMap } from '../ui/map.js';
 
@@ -44,15 +44,10 @@ export default function Home() {
     }, () => fallback('위치 권한이 없어 내 위치로 옮기지 못했어요'), { timeout: 6000 });
   };
 
-  // 칩은 3개만: 시트에서 고른 카테고리가 앞 3개에 없으면 맨 앞에 보여 줘요
-  const cs = cats(), top = cs.slice(0, 3);
+  // 칩은 3개만: 내가 고른 카테고리(이 기기에 저장, 없으면 앞 3개). 시트에서 고른 게 그 밖이면 맨 앞에 보여 줘요
+  const cs = cats(), top = homeCats(cs);
   const shown = !cat || top.some(c => c.name === cat) ? top : [cs.find(c => c.name === cat), ...top.slice(0, 2)].filter(Boolean);
-  const pickCat = () => ui.sheet(close => <><h3>카테고리</h3>
-    <div className="chips wrap cat-all" role="radiogroup" aria-label="카테고리 전체">
-      {[{ name: '전체', icon: '' }, ...cs].map(({ name: c, icon }) => { const v = c === '전체' ? '' : c;
-        return <button key={c} className={`chip ${cat === v ? 'on' : ''}`} role="radio" aria-checked={cat === v}
-          onClick={() => { setCat(v); close(); }}>{icon && `${icon} `}{c}</button>; })}
-    </div></>);
+  const pickCat = () => ui.sheet(close => <CatSheet cs={cs} cat={cat} pick={v => { setCat(v); close(); }} />);
 
   const ph = sel ? placePhotos(sel) : [], rs = sel ? pinReviews(sel.id).filter(r => !r.hidden).slice(0, 2) : [];
   return <Screen nav="홈" title="지도">
@@ -64,7 +59,7 @@ export default function Home() {
         <div className="chips" role="radiogroup" aria-label="카테고리">
           {shown.map(({ name: c, icon }) => <button key={c} className={`chip raised ${cat === c ? 'on' : ''}`} role="radio" aria-checked={cat === c}
             onClick={() => setCat(cat === c ? '' : c)}>{icon && `${icon} `}{c}</button>)}
-          {cs.length > 3 && <button className="chip raised chip-more" aria-label="카테고리 전체 보기" onClick={pickCat}><Icon n="feed" cls="sm" /></button>}
+          {cs.length > 0 && <button className="chip raised chip-more" aria-label="카테고리 전체 보기" onClick={pickCat}><Icon n="feed" cls="sm" /></button>}
         </div>
       </div>
       {!sel && <button className="float fab fab-loc" aria-label="내 위치로 이동" onClick={locate}><Icon n="locate" /></button>}
@@ -83,4 +78,29 @@ export default function Home() {
       </Link>}
     </div>
   </Screen>;
+}
+
+const MAX = 3;
+const homeCats = cs => {
+  const mine = (DB.get('homeCats', null) || []).map(n => cs.find(c => c.name === n)).filter(Boolean);
+  return mine.length ? mine : cs.slice(0, MAX);
+};
+
+// 카테고리 시트: 눌러서 걸러 보기, 편집에서는 지도에 띄울 칩을 3개까지 골라요
+function CatSheet({ cs, cat, pick }) {
+  const [edit, setEdit] = useState(false), [on, setOn] = useState(() => homeCats(cs).map(c => c.name));
+  const toggle = c => setOn(on.includes(c) ? on.filter(x => x !== c) : on.length < MAX ? [...on, c] : on);
+  const done = () => { DB.set('homeCats', on); setEdit(false); ui.toast('지도에 띄울 카테고리를 바꿨어요'); };
+  return <>
+    <div className="sheet-head"><h3>{edit ? '지도에 띄울 카테고리' : '카테고리'}</h3>
+      <button onClick={edit ? done : () => setEdit(true)}>{edit ? '완료' : '편집'}</button></div>
+    {edit && <p className="lead">{MAX}개까지 고를 수 있어요. 고른 순서대로 지도에 보여요.</p>}
+    <div className="chips wrap cat-all" role={edit ? 'group' : 'radiogroup'} aria-label="카테고리 전체">
+      {edit ? cs.map(({ name: c, icon }) => { const i = on.indexOf(c);
+        return <button key={c} className={`chip ${i >= 0 ? 'on' : ''}`} aria-pressed={i >= 0} disabled={i < 0 && on.length >= MAX}
+          onClick={() => toggle(c)}>{i >= 0 && <span className="cat-no">{i + 1}</span>}{icon && `${icon} `}{c}</button>; })
+      : [{ name: '전체', icon: '' }, ...cs].map(({ name: c, icon }) => { const v = c === '전체' ? '' : c;
+        return <button key={c} className={`chip ${cat === v ? 'on' : ''}`} role="radio" aria-checked={cat === v}
+          onClick={() => pick(v)}>{icon && `${icon} `}{c}</button>; })}
+    </div></>;
 }

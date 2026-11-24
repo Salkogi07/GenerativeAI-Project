@@ -69,11 +69,26 @@ function dialog({ title, body = '', ok = '확인', cancel = '취소', danger = f
   });
 }
 
+// 손잡이를 아래로 끌면 시트가 따라 내려오고, 80px 넘게 내리면 닫혀요
+function dragSheet(e, close) {
+  const g = e.currentTarget, el = g.parentElement, y0 = e.clientY;
+  g.setPointerCapture(e.pointerId);
+  el.style.transition = 'none';
+  let dy = 0;
+  g.onpointermove = ev => { dy = Math.max(0, ev.clientY - y0); el.style.transform = `translateY(${dy}px)`; };
+  g.onpointerup = g.onpointercancel = () => {
+    g.onpointermove = null;
+    if (dy > 80) return close();
+    el.style.transition = 'transform .18s'; el.style.transform = '';
+  };
+}
+
 function sheet(html, onOpen) {
   const w = document.createElement('div');
   w.innerHTML = `<div class="dim"></div><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div>`;
   $('.scr').append(w);
   const close = () => w.remove();
+  w.querySelector('.grab').onpointerdown = e => dragSheet(e, close);
   w.addEventListener('click', e => { if (e.target.classList.contains('dim') || e.target.closest('[data-close]')) close(); });
   onOpen?.(w, close);
   return close;

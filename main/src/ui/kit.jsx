@@ -55,10 +55,27 @@ export const ui = {
   view(list, i = 0) { setOverlay({ view: { list, i } }); },
 };
 
+// 손잡이를 아래로 끌면 시트가 따라 내려오고, 80px 넘게 내리면 닫혀요
+function dragSheet(e, close) {
+  const el = e.currentTarget.parentElement, y0 = e.clientY;
+  e.currentTarget.setPointerCapture(e.pointerId);
+  el.style.transition = 'none';
+  let dy = 0;
+  const move = ev => { dy = Math.max(0, ev.clientY - y0); el.style.transform = `translateY(${dy}px)`; };
+  const up = ev => {
+    ev.target.removeEventListener('pointermove', move);
+    if (dy > 80) return close();
+    el.style.transition = 'transform .18s'; el.style.transform = '';
+  };
+  e.currentTarget.addEventListener('pointermove', move);
+  e.currentTarget.addEventListener('pointerup', up, { once: true });
+  e.currentTarget.addEventListener('pointercancel', up, { once: true });
+}
+
 function Overlays() {
   const o = useSyncExternalStore(f => { osubs.add(f); return () => osubs.delete(f); }, () => overlay);
   return <>
-    {o.sheets.map(s => <div key={s.key}><div className="dim" onClick={s.close} /><div className="sheet" role="dialog" aria-modal="true"><div className="grab" />{s.render(s.close)}</div></div>)}
+    {o.sheets.map(s => <div key={s.key}><div className="dim" onClick={s.close} /><div className="sheet" role="dialog" aria-modal="true"><div className="grab" onPointerDown={e => dragSheet(e, s.close)} />{s.render(s.close)}</div></div>)}
     {o.dialog && <Dialog {...o.dialog} key={o.dialog.title} />}
     {o.toast && <Toast {...o.toast} key={o.toast.key} />}
     {o.view && <Viewer {...o.view} />}
