@@ -15,7 +15,7 @@ function queue(name) {
     .map(x => ({ queue: name, confidence: x.confidence, reason: x.reason || (name === 'pending' ? 'AI 판정 호출에 실패해 미판정으로 남았어요.' : ''), review: rs.find(r => r.id === x.review_id) }))
     .filter(x => x.review);
 }
-const TABS = [['ai', 'AI 의심'], ['report', '신고'], ['pin', '핀 신고'], ['pending', '미판정'], ['cat', '카테고리']];
+const TABS = [['ai', 'AI 의심'], ['report', '리뷰 신고'], ['pin', '핀 신고'], ['pending', '미판정'], ['cat', '카테고리']];
 // 신고된 핀, 신고 많은 순
 const reportedPins = () => pins().filter(p => p.reports.length).sort((a, b) => b.reports.length - a.reports.length);
 const countReasons = list => Object.entries(list.reduce((a, y) => { a[y.reason] = (a[y.reason] || 0) + 1; return a; }, {}));
