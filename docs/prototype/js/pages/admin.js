@@ -14,18 +14,21 @@ function queue(name) {
   const rs = reviews(), d = decisions();
   // 판정 완료: 운영자가 처리한 리뷰 + 문제없음 처리한 핀(새 신고 없는 것). 여기서 판정을 바꿀 수 있어요.
   if (name === 'done') return [...rs.filter(r => d[r.id]).map(r => ({ review: r, done: d[r.id] })),
-    ...pins().filter(p => p.reportOk && p.reports.length <= p.reportOk).map(p => ({ pin: p }))];
+    ...pins().filter(p => p.reportOk && (p.reports?.length || 0) <= p.reportOk).map(p => ({ pin: p }))];
   if (name === 'report') return rs.filter(r => r.reports.length >= 3 && !d[r.id]).map(r => ({ review: r }));
   return AI_EXAMPLES.filter(x => x.queue === name && !d[x.review])
     .map(x => ({ ...x, review: rs.find(r => r.id === x.review) })).filter(x => x.review);
 }
 // 핀 신고: 운영자가 보고 지워요. 지우면 그 핀의 리뷰도 함께 지워져요.
 function pinCard({ pin: p }) {
+  const open = (p.reports?.length || 0) > (p.reportOk || 0);
   return `<div class="review-card" data-pin="${p.id}">
-    <div class="meta"><span><b>${esc(p.name)}</b> · ${esc(nickOf(p.author))} · ${fmtDate(p.created)}</span></div>
+    <div class="meta"><span><b>${esc(p.name)}</b> · ${esc(nickOf(p.author))} · ${fmtDate(p.created)}</span>
+      <span class="meta-end">${open ? '' : `<span class="tag">${p.adminLabel ? '광고 라벨 붙임' : '문제없음'}</span>`}<a class="see-pin" href="pin.html?id=${p.id}">핀 보기${icon('chev', 'xs')}</a></span></div>
+    ${p.adminLabel ? '<span class="ad-label">협찬·광고</span>' : ''}
     <p class="quote">${esc(p.desc || '설명이 없어요.')}</p>
     <div class="report-line"><b>신고 ${p.reports.length}건</b> · <span>${countReasons(p.reports).map(([k, n]) => `${esc(k)} ${n}`).join(', ')}</span></div>
-    <div class="decide"><a class="btn sm line" href="pin.html?id=${p.id}">핀 보기</a><button class="btn sm line" data-ok-pin>문제없음</button><button class="btn sm line danger-line" data-del-pin>핀 삭제</button></div>
+    <div class="decide"><button class="btn sm" data-pin-act="label">광고 라벨</button><button class="btn sm line" data-pin-act="ok">문제없음</button><button class="btn sm line danger-line" data-del-pin>삭제</button></div>
   </div>`;
 }
 function card(x) {
@@ -37,7 +40,8 @@ function card(x) {
       ${x.confidence ? `<div class="conf"><i data-conf="${x.confidence}"></i></div>` : ''}
       <div class="ai-reason">${esc(x.reason)}</div></div>` : '';
   return `<div class="review-card" data-card="${r.id}">
-    <div class="meta"><span><b>${esc(p?.name || '삭제된 핀')}</b> · ${esc(nickOf(r.by, r.nick))} · ${fmtDate(r.at)}</span>${x.done ? `<span class="tag">${{ label: '광고 라벨 붙임', ok: '문제없음', hide: '숨김(이전 처리)' }[x.done]}</span>` : r.hidden ? '<span class="tag">숨김 중</span>' : ''}</div>
+    <div class="meta"><span><b>${esc(p?.name || '삭제된 핀')}</b> · ${esc(nickOf(r.by, r.nick))} · ${fmtDate(r.at)}</span>
+      <span class="meta-end">${x.done ? `<span class="tag">${{ label: '광고 라벨 붙임', ok: '문제없음', hide: '숨김(이전 처리)' }[x.done]}</span>` : r.hidden ? '<span class="tag">숨김 중</span>' : ''}${p ? `<a class="see-pin" href="pin.html?id=${p.id}#rv-${r.id}">핀 보기${icon('chev', 'xs')}</a>` : ''}</span></div>
     ${r.ad || r.adminLabel ? '<span class="ad-label">협찬·광고</span>' : ''}
     <p class="quote">${esc(r.body)}</p>${ai}
     ${reasons.length ? `<div class="report-line"><b>신고 ${r.reports.length}건</b> · <span>${reasons.map(([k, n]) => `${esc(k)} ${n}`).join(', ')}</span></div>` : ''}
@@ -52,12 +56,15 @@ function render() {
 }
 $('#tabs').onclick = e => { const b = e.target.closest('[data-q]'); if (b) { q = b.dataset.q; render(); } };
 $('#list').onclick = async e => {
-  if (e.target.closest('[data-ok-pin]')) {
-    const id = e.target.closest('[data-pin]').dataset.pin, all = pins(), p = all.find(x => x.id === id), before = p.reportOk || 0;
-    p.reportOk = p.reports.length;
+  // 핀 처리: 광고 라벨 · 문제없음. 둘 다 지금까지 들어온 신고를 처리한 것으로 봐요(reportOk).
+  const pa = e.target.closest('[data-pin-act]');
+  if (pa) {
+    const id = pa.closest('[data-pin]').dataset.pin, act = pa.dataset.pinAct, all = pins(), p = all.find(x => x.id === id);
+    const before = { reportOk: p.reportOk || 0, adminLabel: !!p.adminLabel };
+    Object.assign(p, { reportOk: p.reports?.length || 0, adminLabel: act === 'label' });
     save('pins', all);
     render();
-    return toast('문제없음으로 처리했어요', { label: '되돌리기', fn: () => { const a = pins(); a.find(x => x.id === id).reportOk = before; save('pins', a); render(); } });
+    return toast(act === 'label' ? '광고 라벨을 붙였어요' : '문제없음으로 처리했어요', { label: '되돌리기', fn: () => { const a = pins(); Object.assign(a.find(x => x.id === id), before); save('pins', a); render(); } });
   }
   if (e.target.closest('[data-del-pin]')) {
     const id = e.target.closest('[data-pin]').dataset.pin, p = pinById(id);

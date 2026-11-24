@@ -31,3 +31,5 @@
 .appeal-box.rejected{background:var(--surface)}
 .appeal-mine,.appeal-reply{margin-top:4px;color:var(--sub);white-space:pre-line}
 .appeal-reply{color:var(--text)}
+.review-card .meta-end{display:flex;align-items:center;gap:8px;flex:none}
+.see-pin{display:inline-flex;align-items:center;font-weight:600;color:var(--brand)}

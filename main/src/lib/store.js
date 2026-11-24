@@ -64,7 +64,7 @@ export async function refresh() {
     nick: new Map(pr.data.map(x => [x.id, x])),
     likes: new Map(lk.data.map(x => [x.pin_id, Number(x.n)])),
     pins: p.data.map(x => ({ id: x.id, name: x.name, cat: x.cat, kind: x.place_id ? '장소' : '위치', placeId: x.place_id, lat: x.lat, lng: x.lng,
-      desc: x.description, photos: x.photos, ad: x.ad, author: x.author, created: t(x.created_at), reportOk: x.report_ok_id,
+      desc: x.description, photos: x.photos, ad: x.ad, author: x.author, created: t(x.created_at), reportOk: x.report_ok_id, adminLabel: x.admin_label,
       reports: pp.data.filter(y => y.pin_id === x.id).map(y => ({ id: y.id, by: y.reporter, reason: y.reason })) })),
     reviews: r.data.map(x => ({ id: x.id, pin: x.pin_id, by: x.author, body: x.body, ad: x.ad, photos: x.photos, hidden: x.hidden,
       adminLabel: x.admin_label, decision: x.admin_decision, reportCount: x.report_count, at: t(x.created_at),

@@ -18,3 +18,5 @@
 .admin-seg{padding:0 8px;overflow-x:auto;scrollbar-width:none} /* 탭 5개가 360px에 들어가게, 넘치면 옆으로 */
 .admin-seg::-webkit-scrollbar{display:none}
 .admin-seg button{flex:1 0 auto;padding:0 4px;font-size:14.5px;white-space:nowrap}
+.review-card .meta-end{display:flex;align-items:center;gap:8px;flex:none}
+.see-pin{display:inline-flex;align-items:center;font-weight:600;color:var(--brand)}

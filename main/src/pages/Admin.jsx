@@ -17,7 +17,7 @@ function queue(name) {
     .map(x => ({ queue: name, source: x.source, confidence: x.confidence, reason: x.reason || '', review: rs.find(r => r.id === x.review_id) }))
     .filter(x => x.review);
 }
-const TABS = [['ai', 'AI 의심'], ['report', '리뷰 신고'], ['pin', '핀 신고'], ['done', '판정 완료'], ['cat', '카테고리']];
+const TABS = [['ai', 'AI 의심'], ['pin', '핀 신고'], ['report', '리뷰 신고'], ['done', '판정 완료'], ['cat', '카테고리']];
 // 판정 완료: 운영자가 광고 라벨·문제없음으로 처리한 리뷰 + 문제없음 처리한 핀(새 신고가 없는 것). 여기서 판정을 바꿀 수 있어요.
 const doneReviews = () => reviews().filter(r => r.decision).sort((a, b) => b.at - a.at);
 const donePins = () => pins().filter(p => p.reportOk > 0 && !newReports(p).length);
@@ -58,11 +58,13 @@ async function removeReview(r) {
   if (!(await ui.dialog({ title: '이 리뷰를 삭제할까요?', body: '휴지통에 7일 동안 보관돼요.' + (r.reports.length ? ' 신고된 리뷰라 작성자에게 알림이 가요.' : ''), ok: '삭제', danger: true }))) return;
   ui.toast(await del('reviews', r.id) ? '리뷰를 삭제했어요' : '삭제하지 못했어요. 다시 시도해 주세요');
 }
-// 핀 신고 문제없음: 지금까지 들어온 신고까지 확인한 것으로 표시해요(서버 함수, 운영자만). 새 신고가 오면 다시 올라와요.
-async function pinOk(p) {
-  const set = upto => run(supabase.rpc('pin_reports_ok', { pid: p.id, upto }));
-  if ((await set(Math.max(...p.reports.map(y => y.id)))).error) return ui.toast('처리하지 못했어요. 다시 시도해 주세요');
-  ui.toast('문제없음으로 처리했어요', { label: '되돌리기', fn: () => set(p.reportOk) });
+// 핀 처리: 광고 라벨(운영자 협찬·광고 표시) · 문제없음. 둘 다 지금까지 들어온 신고를 처리한 것으로 봐요.
+// 서버 함수(운영자만)로 바꿔요. 새 신고가 오면 다시 핀 신고 탭에 올라와요.
+async function pinDecide(p, act) {
+  const set = (label, upto) => run(supabase.rpc('pin_decide', { pid: p.id, label, upto }));
+  const upto = Math.max(0, ...p.reports.map(y => y.id));
+  if ((await set(act === 'label', upto)).error) return ui.toast('처리하지 못했어요. 다시 시도해 주세요');
+  ui.toast(DONE[act], { label: '되돌리기', fn: () => set(p.adminLabel, p.reportOk) });
 }
 async function removePin(p) {
   if (!(await ui.dialog({ title: `"${p.name}" 핀을 삭제할까요?`, body: `리뷰 ${pinReviews(p.id).length}개도 함께 지워져요. 휴지통에 7일 동안 보관돼요.`, ok: '삭제', danger: true }))) return;
@@ -72,7 +74,9 @@ async function removePin(p) {
 function ReviewItem({ x }) {
   const r = x.review, p = pinById(r.pin), reasons = countReasons(r.reports);
   return <div className="review-card">
-    <div className="meta"><span><b>{p?.name || '삭제된 핀'}</b> · {nickOf(r.by)} · {fmtDate(r.at)}</span>{r.decision ? <span className="tag">{DECISION[r.decision]}</span> : r.hidden && <span className="tag">숨김 중</span>}</div>
+    <div className="meta"><span><b>{p?.name || '삭제된 핀'}</b> · {nickOf(r.by)} · {fmtDate(r.at)}</span>
+      <span className="meta-end">{r.decision ? <span className="tag">{DECISION[r.decision]}</span> : r.hidden && <span className="tag">숨김 중</span>}
+        {p && <Link className="see-pin" to={`/pin?id=${p.id}&at=rv-${r.id}`}>핀 보기<Icon n="chev" cls="xs" /></Link>}</span></div>
     <AdLabel r={r} />
     <p className="quote">{r.body}</p>
     {x.queue && <div className="ai-box">
@@ -89,12 +93,15 @@ function ReviewItem({ x }) {
 function PinItem({ p }) {
   const open = newReports(p).length > 0;
   return <div className="review-card">
-    <div className="meta"><span><b>{p.name}</b> · {nickOf(p.author)} · {fmtDate(p.created)}</span>{!open && <span className="tag">문제없음 처리함</span>}</div>
+    <div className="meta"><span><b>{p.name}</b> · {nickOf(p.author)} · {fmtDate(p.created)}</span>
+      <span className="meta-end">{!open && <span className="tag">{p.adminLabel ? '광고 라벨 붙임' : '문제없음'}</span>}
+        <Link className="see-pin" to={`/pin?id=${p.id}`}>핀 보기<Icon n="chev" cls="xs" /></Link></span></div>
+    <AdLabel r={p} />
     <p className="quote">{p.desc || '설명이 없어요.'}</p>
     <div className="report-line"><b>신고 {p.reports.length}건</b> · <span>{countReasons(p.reports).map(([k, n]) => `${k} ${n}`).join(', ')}</span><Nos kind="pin" list={p.reports} /></div>
-    <div className="decide"><Link className="btn sm line" to={`/pin?id=${p.id}`}>핀 보기</Link>
-      {open && <button className="btn sm line" onClick={() => pinOk(p)}>문제없음</button>}
-      <button className="btn sm line danger-line" onClick={() => removePin(p)}>핀 삭제</button></div>
+    <div className="decide"><button className="btn sm" onClick={() => pinDecide(p, 'label')}>광고 라벨</button>
+      <button className="btn sm line" onClick={() => pinDecide(p, 'ok')}>문제없음</button>
+      <button className="btn sm line danger-line" onClick={() => removePin(p)}>삭제</button></div>
   </div>;
 }
 
