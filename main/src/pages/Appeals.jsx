@@ -28,12 +28,12 @@ function AppealCard({ a }) {
   const n = a.notice, nos = n.report_ids.map(id => reportNo('review', id)).join(' · ');
   const answer = async ok => {
     const reply = await ui.dialog({ title: ok ? '이의 제기를 받아들일까요?' : '이의 제기를 거절할까요?',
-      body: ok ? (n.kind === 'review_deleted' ? '휴지통에서 리뷰를 되살려요.' : '리뷰 숨김을 풀어요.') + ' 작성자에게 보일 답변을 적어 주세요(선택).' : '작성자에게 보일 답변을 적어 주세요(선택).',
-      ok: ok ? '받아들이기' : '거절하기', input: { max: 500, placeholder: '답변 (선택)', validate: () => '' } });
+      body: ok ? (n.kind === 'review_deleted' ? '휴지통에서 리뷰를 바로 되살려요(숨김 없이 원래 자리로).' : '리뷰 숨김을 풀어요.') + ' 작성자에게 보일 답변을 적어 주세요(선택).' : '작성자에게 보일 답변을 적어 주세요(선택).',
+      ok: ok ? (n.kind === 'review_deleted' ? '되살리기' : '받아들이기') : '거절하기', input: { max: 500, placeholder: '답변 (선택)', validate: () => '' } });
     if (reply === null) return;
     if (ok && !(await fix(n))) return;
     const { error } = await run(supabase.from('appeals').update({ status: ok ? 'accepted' : 'rejected', reply: reply || null, resolved_at: new Date().toISOString() }).eq('id', a.id));
-    ui.toast(error ? '처리하지 못했어요. 다시 시도해 주세요' : ok ? '받아들였어요' : '거절했어요');
+    ui.toast(error ? '처리하지 못했어요. 다시 시도해 주세요' : ok ? (n.kind === 'review_deleted' ? '받아들이고 리뷰를 되살렸어요' : '받아들였어요') : '거절했어요');
   };
   return <div className="review-card">
     <div className="meta"><span><b>{n.kind === 'review_deleted' ? '삭제된 리뷰' : '숨긴 리뷰'}</b> · {nickOf(a.user_id)} · {n.pin_name || '삭제된 핀'}</span><span>{fmtDate(Date.parse(a.created_at))}</span></div>
@@ -41,7 +41,7 @@ function AppealCard({ a }) {
     {n.photos.length > 0 && <div className="photos">{n.photos.map((p, i) => <Photo key={i} p={p} alt="처리된 리뷰 사진" zoom={n.photos} />)}</div>}
     <div className="report-line"><b>신고 번호</b> <span className="report-nos num">{nos}</span> · <span>{[...new Set(n.reasons)].join(', ')}</span></div>
     <div className="appeal-box"><b>이의 제기</b><p className="appeal-mine">{a.body}</p>{a.reply && <p className="appeal-reply">답변: {a.reply}</p>}</div>
-    {a.status === 'open' ? <div className="decide"><button className="btn sm" onClick={() => answer(true)}>받아들이기</button>
+    {a.status === 'open' ? <div className="decide"><button className="btn sm" onClick={() => answer(true)}>{n.kind === 'review_deleted' ? '받아들이고 되살리기' : '받아들이기'}</button>
       <button className="btn sm line" onClick={() => answer(false)}>거절</button></div>
       : <p className="footnote">{a.status === 'accepted' ? '받아들였어요' : '거절했어요'} · {fmtDate(Date.parse(a.resolved_at))}</p>}
   </div>;

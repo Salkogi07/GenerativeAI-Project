@@ -1,4 +1,4 @@
-// 리뷰 검토 (운영자 전용): AI 의심·신고·미판정 대기열, 광고 라벨/숨김/문제없음/삭제 처리 + 되돌리기. 핀 신고(핀 삭제). 카테고리 관리.
+// 리뷰 검토 (운영자 전용): AI 의심·신고·미판정 대기열, 광고 라벨/문제없음/삭제 처리 + 되돌리기. 핀 신고(문제없음/핀 삭제). 카테고리 관리.
 // 신고 번호(R-12 리뷰, P-3 핀)로 검색하면 지금 있는 리뷰·핀과 휴지통에서 찾아요.
 // AI 판정은 review_ai_checks(운영자만 읽기). 지금은 서버 키워드 1차 판정만 있고, AI(Edge Function)는 아직 없어요.
 import { useState } from 'react';
@@ -18,12 +18,13 @@ function queue(name) {
     .filter(x => x.review);
 }
 const TABS = [['ai', 'AI 의심'], ['report', '리뷰 신고'], ['pin', '핀 신고'], ['pending', '미판정'], ['cat', '카테고리']];
-// 신고된 핀, 신고 많은 순
-const reportedPins = () => pins().filter(p => p.reports.length).sort((a, b) => b.reports.length - a.reports.length);
+// 문제없음 처리 뒤에 들어온 신고가 있는 핀, 신고 많은 순
+const newReports = p => p.reports.filter(y => y.id > p.reportOk);
+const reportedPins = () => pins().filter(p => newReports(p).length).sort((a, b) => newReports(b).length - newReports(a).length);
 const countReasons = list => Object.entries(list.reduce((a, y) => { a[y.reason] = (a[y.reason] || 0) + 1; return a; }, {}));
 // RLS가 막으면 오류 없이 0행이 지워져서, 지워진 행이 없으면 실패로 봐요
 const del = async (table, id) => { const { data, error } = await run(supabase.from(table).delete().eq('id', id).select('id')); return !error && data?.length > 0; };
-const DONE = { label: '광고 라벨을 붙였어요', hide: '리뷰를 숨겼어요', ok: '문제없음으로 처리했어요' };
+const DONE = { label: '광고 라벨을 붙였어요', ok: '문제없음으로 처리했어요' };
 
 // 신고 번호 검색: "R-12"는 리뷰 신고, "P-3"은 핀 신고, 숫자만 쓰면 둘 다 찾아요.
 export function findReport(text) {
@@ -41,17 +42,23 @@ export function findReport(text) {
 const Nos = ({ kind, list }) => <span className="report-nos num">{list.map(y => reportNo(kind, y.id)).join(' · ')}</span>;
 
 // 문제없음 → 신고 숨김 해제. 처리한 리뷰는 신고가 더 들어와도 다시 자동 숨김되지 않아요.
-// 신고된 리뷰를 숨기거나 지우면 서버가 작성자에게 알림을 보내요(notices).
+// 숨김 처리는 없어요(삭제와 나눌 이유가 없어서). 신고된 리뷰를 지우면 서버가 작성자에게 알림을 보내요(notices).
 async function decide(rid, act) {
   const r = reviews().find(x => x.id === rid), before = { hidden: r.hidden, admin_label: r.adminLabel, admin_decision: null };
-  const patch = act === 'label' ? { admin_label: true, hidden: false } : act === 'hide' ? { hidden: true } : { hidden: false };
+  const patch = act === 'label' ? { admin_label: true, hidden: false } : { hidden: false };
   const set = p => run(supabase.from('reviews').update(p).eq('id', rid));
   if ((await set({ ...patch, admin_decision: act })).error) return ui.toast('처리하지 못했어요. 다시 시도해 주세요');
-  ui.toast(DONE[act] + (act === 'hide' && r.reports.length ? '. 작성자에게 알림이 가요' : ''), { label: '되돌리기', fn: () => set(before) });
+  ui.toast(DONE[act], { label: '되돌리기', fn: () => set(before) });
 }
 async function removeReview(r) {
   if (!(await ui.dialog({ title: '이 리뷰를 삭제할까요?', body: '휴지통에 7일 동안 보관돼요.' + (r.reports.length ? ' 신고된 리뷰라 작성자에게 알림이 가요.' : ''), ok: '삭제', danger: true }))) return;
   ui.toast(await del('reviews', r.id) ? '리뷰를 삭제했어요' : '삭제하지 못했어요. 다시 시도해 주세요');
+}
+// 핀 신고 문제없음: 지금까지 들어온 신고까지 확인한 것으로 표시해요(서버 함수, 운영자만). 새 신고가 오면 다시 올라와요.
+async function pinOk(p) {
+  const set = upto => run(supabase.rpc('pin_reports_ok', { pid: p.id, upto }));
+  if ((await set(Math.max(...p.reports.map(y => y.id)))).error) return ui.toast('처리하지 못했어요. 다시 시도해 주세요');
+  ui.toast('문제없음으로 처리했어요', { label: '되돌리기', fn: () => set(p.reportOk) });
 }
 async function removePin(p) {
   if (!(await ui.dialog({ title: `"${p.name}" 핀을 삭제할까요?`, body: `리뷰 ${pinReviews(p.id).length}개도 함께 지워져요. 휴지통에 7일 동안 보관돼요.`, ok: '삭제', danger: true }))) return;
@@ -70,18 +77,19 @@ function ReviewItem({ x }) {
       <div className="ai-reason">{x.reason}</div></div>}
     {reasons.length > 0 && <div className="report-line"><b>신고 {r.reports.length}건</b> · <span>{reasons.map(([k, n]) => `${k} ${n}`).join(', ')}</span><Nos kind="review" list={r.reports} /></div>}
     <div className="decide"><button className="btn sm" onClick={() => decide(r.id, 'label')}>광고 라벨</button>
-      <button className="btn sm sec" onClick={() => decide(r.id, 'hide')}>숨김</button>
       <button className="btn sm line" onClick={() => decide(r.id, 'ok')}>문제없음</button>
       <button className="btn sm line danger-line" onClick={() => removeReview(r)}>삭제</button></div>
   </div>;
 }
 
 function PinItem({ p }) {
+  const open = newReports(p).length > 0;
   return <div className="review-card">
-    <div className="meta"><span><b>{p.name}</b> · {nickOf(p.author)} · {fmtDate(p.created)}</span></div>
+    <div className="meta"><span><b>{p.name}</b> · {nickOf(p.author)} · {fmtDate(p.created)}</span>{!open && <span className="tag">문제없음 처리함</span>}</div>
     <p className="quote">{p.desc || '설명이 없어요.'}</p>
     <div className="report-line"><b>신고 {p.reports.length}건</b> · <span>{countReasons(p.reports).map(([k, n]) => `${k} ${n}`).join(', ')}</span><Nos kind="pin" list={p.reports} /></div>
     <div className="decide"><Link className="btn sm line" to={`/pin?id=${p.id}`}>핀 보기</Link>
+      {open && <button className="btn sm line" onClick={() => pinOk(p)}>문제없음</button>}
       <button className="btn sm line danger-line" onClick={() => removePin(p)}>핀 삭제</button></div>
   </div>;
 }
