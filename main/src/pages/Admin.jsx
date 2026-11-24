@@ -1,4 +1,4 @@
-// 리뷰 검토 (운영자 전용): AI 의심·신고·미판정 대기열, 광고 라벨/문제없음/삭제 처리 + 되돌리기. 핀 신고(문제없음/핀 삭제). 카테고리 관리.
+// 리뷰 검토 (운영자 전용): AI 의심·리뷰 신고·핀 신고 대기열과 판정 완료 목록, 광고 라벨/문제없음/삭제 처리 + 되돌리기. 핀 신고(문제없음/핀 삭제). 카테고리 관리.
 // 신고 번호(R-12 리뷰, P-3 핀)로 검색하면 지금 있는 리뷰·핀과 휴지통에서 찾아요.
 // AI 판정은 review_ai_checks(운영자만 읽기). 지금은 서버 키워드 1차 판정만 있고, AI(Edge Function)는 아직 없어요.
 import { useState } from 'react';
@@ -8,16 +8,20 @@ import { supabase } from '../supabase.js';
 import { AdLabel, BackBtn, Icon, Screen, ui } from '../ui/kit.jsx';
 import { TrashCard } from './Trash.jsx';
 
-// ai: 의심(확신도 0.5 이상, 키워드 판정 포함), pending: AI 호출 실패. 운영자가 처리한 리뷰는 빠져요.
+// ai: 의심(확신도 0.5 이상, 키워드 판정 포함). 운영자가 처리한 리뷰는 대기열에서 빠지고 판정 완료(done)로 가요.
 function queue(name) {
   const rs = reviews().filter(r => !r.decision);
   // 신고가 한 건이라도 있으면 보여요 (3건이면 서버가 자동으로 숨겨 둔 상태). 신고 많은 순.
   if (name === 'report') return rs.filter(r => r.reportCount > 0).sort((a, b) => b.reportCount - a.reportCount).map(r => ({ review: r }));
-  return aiChecks().filter(x => (name === 'ai' ? x.status === 'done' && x.confidence >= 0.5 : x.status === 'failed'))
-    .map(x => ({ queue: name, source: x.source, confidence: x.confidence, reason: x.reason || (name === 'pending' ? 'AI 판정 호출에 실패해 미판정으로 남았어요.' : ''), review: rs.find(r => r.id === x.review_id) }))
+  return aiChecks().filter(x => x.status === 'done' && x.confidence >= 0.5)
+    .map(x => ({ queue: name, source: x.source, confidence: x.confidence, reason: x.reason || '', review: rs.find(r => r.id === x.review_id) }))
     .filter(x => x.review);
 }
-const TABS = [['ai', 'AI 의심'], ['report', '리뷰 신고'], ['pin', '핀 신고'], ['pending', '미판정'], ['cat', '카테고리']];
+const TABS = [['ai', 'AI 의심'], ['report', '리뷰 신고'], ['pin', '핀 신고'], ['done', '판정 완료'], ['cat', '카테고리']];
+// 판정 완료: 운영자가 광고 라벨·문제없음으로 처리한 리뷰 + 문제없음 처리한 핀(새 신고가 없는 것). 여기서 판정을 바꿀 수 있어요.
+const doneReviews = () => reviews().filter(r => r.decision).sort((a, b) => b.at - a.at);
+const donePins = () => pins().filter(p => p.reportOk > 0 && !newReports(p).length);
+const DECISION = { label: '광고 라벨 붙임', ok: '문제없음', hide: '숨김(이전 처리)' };
 // 문제없음 처리 뒤에 들어온 신고가 있는 핀, 신고 많은 순
 const newReports = p => p.reports.filter(y => y.id > p.reportOk);
 const reportedPins = () => pins().filter(p => newReports(p).length).sort((a, b) => newReports(b).length - newReports(a).length);
@@ -68,7 +72,7 @@ async function removePin(p) {
 function ReviewItem({ x }) {
   const r = x.review, p = pinById(r.pin), reasons = countReasons(r.reports);
   return <div className="review-card">
-    <div className="meta"><span><b>{p?.name || '삭제된 핀'}</b> · {nickOf(r.by)} · {fmtDate(r.at)}</span>{r.hidden && <span className="tag">숨김 중</span>}</div>
+    <div className="meta"><span><b>{p?.name || '삭제된 핀'}</b> · {nickOf(r.by)} · {fmtDate(r.at)}</span>{r.decision ? <span className="tag">{DECISION[r.decision]}</span> : r.hidden && <span className="tag">숨김 중</span>}</div>
     <AdLabel r={r} />
     <p className="quote">{r.body}</p>
     {x.queue && <div className="ai-box">
@@ -107,7 +111,7 @@ export default function Admin() {
   </Screen>;
 
   const found = find.trim() ? findReport(find) : null;
-  const items = q === 'cat' || q === 'pin' ? [] : queue(q);
+  const items = q === 'ai' || q === 'report' ? queue(q) : [];
   return <Screen title="리뷰 검토">
     <div className="top line"><BackBtn to="/me" /><span className="ttl">리뷰 검토</span></div>
     <div className="admin-find"><div className="control search-box"><Icon n="search" cls="sm muted" />
@@ -117,8 +121,11 @@ export default function Admin() {
       : found.length ? found.map(x => x.review ? <ReviewItem key={x.key} x={x} /> : x.pin ? <PinItem key={x.key} p={x.pin} /> : <TrashCard key={x.key} t={x.trash} />)
       : <div className="empty"><span className="ic"><Icon n="search" /></span><div className="t">"{find.trim()}" 신고를 찾지 못했어요</div><div className="s">휴지통에서 7일이 지나 완전히 지워졌을 수 있어요.</div></div>}</div>
     : <>
-      <div className="seg admin-seg">{TABS.map(([k, n]) => <button key={k} className={q === k ? 'on' : ''} onClick={() => setQ(k)}>{n}<span className="n num">{k === 'cat' ? cats().length : k === 'pin' ? reportedPins().length : queue(k).length}</span></button>)}</div>
-      {q === 'cat' ? <CatAdmin /> : q === 'pin' ? <div className="body">{reportedPins().length ? reportedPins().map(p => <PinItem key={p.id} p={p} />) : <Empty t="신고된 핀이 없어요" />}</div>
+      <div className="seg admin-seg">{TABS.map(([k, n]) => <button key={k} className={q === k ? 'on' : ''} onClick={() => setQ(k)}>{n}<span className="n num">{k === 'cat' ? cats().length : k === 'pin' ? reportedPins().length : k === 'done' ? doneReviews().length + donePins().length : queue(k).length}</span></button>)}</div>
+      {q === 'cat' ? <CatAdmin /> : q === 'done' ? <div className="body">{doneReviews().length + donePins().length
+        ? <>{doneReviews().map(r => <ReviewItem key={r.id} x={{ review: r }} />)}{donePins().map(p => <PinItem key={p.id} p={p} />)}</>
+        : <div className="empty"><span className="ic"><Icon n="check" /></span><div className="t">아직 판정한 게 없어요</div><div className="s">광고 라벨·문제없음으로 처리하면 여기에 모여요.</div></div>}</div>
+        : q === 'pin' ? <div className="body">{reportedPins().length ? reportedPins().map(p => <PinItem key={p.id} p={p} />) : <Empty t="신고된 핀이 없어요" />}</div>
         : <div className="body">{items.length ? items.map(x => <ReviewItem key={x.review.id} x={x} />) : <Empty t="검토할 리뷰가 없어요" />}</div>}
     </>}
   </Screen>;

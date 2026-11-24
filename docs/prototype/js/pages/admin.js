@@ -1,4 +1,4 @@
-// 리뷰 검토 (운영자 전용): AI 의심·신고 누적·미판정 대기열, 광고 라벨/문제없음/삭제 처리 + 되돌리기. 핀 신고(문제없음/핀 삭제).
+// 리뷰 검토 (운영자 전용): AI 의심·리뷰 신고·핀 신고 대기열과 판정 완료 목록, 광고 라벨/문제없음/삭제 처리 + 되돌리기. 핀 신고(문제없음/핀 삭제).
 // AI 판정은 고정 예시 데이터(AI_EXAMPLES)이고 화면에 '예시 데이터'로 표시해요.
 if (!needLogin()) throw new Error('login required');
 // 화면 숨김은 편의일 뿐 — 실서비스는 RLS(app_metadata.role = 'admin')로 차단
@@ -12,6 +12,9 @@ function queue(name) {
   // 핀 신고: 문제없음 처리(reportOk = 확인한 신고 수) 뒤에 새 신고가 있는 핀만
   if (name === 'pin') return pins().filter(p => (p.reports?.length || 0) > (p.reportOk || 0)).sort((a, b) => b.reports.length - a.reports.length).map(p => ({ pin: p }));
   const rs = reviews(), d = decisions();
+  // 판정 완료: 운영자가 처리한 리뷰 + 문제없음 처리한 핀(새 신고 없는 것). 여기서 판정을 바꿀 수 있어요.
+  if (name === 'done') return [...rs.filter(r => d[r.id]).map(r => ({ review: r, done: d[r.id] })),
+    ...pins().filter(p => p.reportOk && p.reports.length <= p.reportOk).map(p => ({ pin: p }))];
   if (name === 'report') return rs.filter(r => r.reports.length >= 3 && !d[r.id]).map(r => ({ review: r }));
   return AI_EXAMPLES.filter(x => x.queue === name && !d[x.review])
     .map(x => ({ ...x, review: rs.find(r => r.id === x.review) })).filter(x => x.review);
@@ -34,7 +37,7 @@ function card(x) {
       ${x.confidence ? `<div class="conf"><i data-conf="${x.confidence}"></i></div>` : ''}
       <div class="ai-reason">${esc(x.reason)}</div></div>` : '';
   return `<div class="review-card" data-card="${r.id}">
-    <div class="meta"><span><b>${esc(p?.name || '삭제된 핀')}</b> · ${esc(nickOf(r.by, r.nick))} · ${fmtDate(r.at)}</span>${r.hidden ? '<span class="tag">숨김 중</span>' : ''}</div>
+    <div class="meta"><span><b>${esc(p?.name || '삭제된 핀')}</b> · ${esc(nickOf(r.by, r.nick))} · ${fmtDate(r.at)}</span>${x.done ? `<span class="tag">${{ label: '광고 라벨 붙임', ok: '문제없음', hide: '숨김(이전 처리)' }[x.done]}</span>` : r.hidden ? '<span class="tag">숨김 중</span>' : ''}</div>
     ${r.ad || r.adminLabel ? '<span class="ad-label">협찬·광고</span>' : ''}
     <p class="quote">${esc(r.body)}</p>${ai}
     ${reasons.length ? `<div class="report-line"><b>신고 ${r.reports.length}건</b> · <span>${reasons.map(([k, n]) => `${esc(k)} ${n}`).join(', ')}</span></div>` : ''}
