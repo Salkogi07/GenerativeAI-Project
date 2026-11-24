@@ -8,7 +8,7 @@ v0.3부터는 원본 스크립트 [source/build_prd.py](source/build_prd.py)로 
 
 | 버전 | 작성일 | 쪽수 | 성격 | 파일 |
 |---|---|---|---|---|
-| v0.5 | 2026-11-24 | 19쪽 | 지도 홈 칩·좁은 화면 반영본, 앱 v1.5 기준 (최신) | [Pin it! PRD v0.5.pdf](<Pin it! PRD v0.5.pdf>) |
+| v0.5 | 2026-11-24 | 17쪽 | 지도 홈 칩·좁은 화면 반영본, 앱 v1.5 기준 (최신) | [Pin it! PRD v0.5.pdf](<Pin it! PRD v0.5.pdf>) |
 | v0.4 | 2026-11-23 | 18쪽 | 메인 앱 배포 반영본, 앱 v0.8 기준 | [Pin it! PRD v0.4.pdf](<Pin it! PRD v0.4.pdf>) |
 | v0.3 | 2026-11-19 | 17쪽 | 실제 구현(메인 앱) 반영본, 배포 전 · 앱 v0.7 기준 | [Pin it! PRD v0.3.pdf](<Pin it! PRD v0.3.pdf>) |
 | v0.2 | 2026-11-10 | 23쪽 | 와이어프레임 v0.1~v0.3 반영본 | [Pin it! PRD v0.2.pdf](<Pin it! PRD v0.2.pdf>) |
@@ -30,7 +30,7 @@ v0.3부터는 원본 스크립트 [source/build_prd.py](source/build_prd.py)로 
 
 ## v0.5: 지도 홈 칩·좁은 화면 반영본
 
-PRD v0.4에 배포 뒤 휴대폰으로 써 보며 고친 화면을 더한 버전이에요. 메인 앱 v1.5(2026-11-24) 기준이고, 화면 구성은 [와이어프레임 v0.4](../wireframe/v0.4/prototype/pages/index.html)와 같아요. [DECISIONS.md](DECISIONS.md)의 D19를 반영했어요.
+PRD v0.4에 배포 뒤 휴대폰으로 써 보며 고친 화면을 더한 버전이에요. v0.5부터는 **바로 전 버전(v0.4) 대비 바뀐 부분만** 표시해요. 그 전 버전들의 변경 내용은 각 버전 PDF와 아래 정리를 보세요. 메인 앱 v1.5(2026-11-24) 기준이고, 화면 구성은 [와이어프레임 v0.4](../wireframe/v0.4/prototype/pages/index.html)와 같아요. [DECISIONS.md](DECISIONS.md)의 D19를 반영했어요.
 
 **v0.4 대비 바뀐 점**
 
