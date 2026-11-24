@@ -259,6 +259,7 @@ ul{padding-left:18px}
 .dialog .acts{display:flex;gap:8px;margin-top:20px}
 .dialog .acts .btn{height:48px;font-size:15px}
 .toast{position:absolute;left:16px;right:16px;bottom:84px;background:#24272e;color:#fff;border-radius:12px;padding:14px 16px;font-size:14.5px;z-index:999;display:flex;justify-content:space-between;align-items:center;gap:12px;animation:rise .2s}
+.scr:has(.sheet) .toast{bottom:auto;top:12px} /* 시트가 열려 있으면 시트를 가리지 않게 위에 */
 .toast.over-cta{bottom:92px}
 .toast.low{bottom:24px}
 .toast button,.toast a{color:#9fb4ff;font-weight:700;white-space:nowrap}

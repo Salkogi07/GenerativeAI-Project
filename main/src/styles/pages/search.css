@@ -1,3 +1,4 @@
 .search-top{padding-right:16px;height:68px} /* 위아래 12px 여백 */
 .search-box{flex:1;min-height:44px;border-radius:22px}
 .search-box input{height:42px;font-size:16px}
+.search-top~.body .empty{justify-content:flex-start;padding-top:64px} /* 키보드가 올라와도 보이게 위쪽에 */
