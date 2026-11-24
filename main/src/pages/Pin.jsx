@@ -54,7 +54,7 @@ export default function Pin() {
       <button onClick={() => { close(); if (needLogin()) ui.sheet(c => <ReportSheet kind="review" id={r.id} close={c} />); }}><Icon n="flag" />신고하기</button>
       {u?.admin && <button className="danger" onClick={async () => {
         close();
-        if (!(await ui.dialog({ title: '이 리뷰를 삭제할까요?', body: '운영자 권한으로 지워요. 되돌릴 수 없어요.', ok: '삭제', danger: true }))) return;
+        if (!(await ui.dialog({ title: '이 리뷰를 삭제할까요?', body: '운영자 권한으로 지워요. 휴지통에 7일 동안 보관돼요.', ok: '삭제', danger: true }))) return;
         ui.toast(await adminDelete('reviews', r.id) ? '리뷰를 삭제했어요' : '삭제하지 못했어요. 다시 시도해 주세요');
       }}><Icon n="trash" />리뷰 삭제 (운영자)</button>}
       <button onClick={close}><Icon n="close" />닫기</button></div>);
@@ -64,7 +64,7 @@ export default function Pin() {
     {!isMine && <button onClick={() => { close(); if (needLogin()) ui.sheet(c => <ReportSheet kind="pin" id={pin.id} close={c} />); }}><Icon n="flag" />핀 신고하기</button>}
     {u?.admin && <button className="danger" onClick={async () => {
       close();
-      if (!(await ui.dialog({ title: '이 핀을 삭제할까요?', body: `운영자 권한으로 지워요. 리뷰 ${rs.length}개도 함께 지워지고 되돌릴 수 없어요.`, ok: '삭제', danger: true }))) return;
+      if (!(await ui.dialog({ title: '이 핀을 삭제할까요?', body: `운영자 권한으로 지워요. 리뷰 ${rs.length}개도 함께 지워져요. 휴지통에 7일 동안 보관돼요.`, ok: '삭제', danger: true }))) return;
       if (await adminDelete('pins', pin.id)) nav('/home?toast=' + encodeURIComponent('핀을 삭제했어요'), { replace: true });
       else ui.toast('삭제하지 못했어요. 다시 시도해 주세요');
     }}><Icon n="trash" />핀 삭제 (운영자)</button>}

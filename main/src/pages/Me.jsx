@@ -1,7 +1,7 @@
 // 마이페이지: 프로필·활동 수(눌러서 펼치기), 신규 계정 리뷰 제한, 닉네임 수정, 위치 정보 이용, 약관, 로그아웃·탈퇴.
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { DAY, addPhotos, ago, isNew, lists, me, pinKind, pins, refresh, reviews, run, todayCount, uploadPhotos, useStore, visibleCount } from '../lib/store.js';
+import { DAY, addPhotos, ago, appeals, isNew, lists, me, notices, pinKind, pins, refresh, reviews, run, todayCount, trash, uploadPhotos, useStore, visibleCount } from '../lib/store.js';
 import { supabase } from '../supabase.js';
 import { Avatar, Icon, Photo, ReviewLink, Screen, openDoc, ui } from '../ui/kit.jsx';
 import { log } from '../lib/log.js';
@@ -104,11 +104,16 @@ export default function Me() {
         <div className="s">오늘 {todayCount(u)} / 3 · {free.getMonth() + 1}월 {free.getDate()}일부터 제한이 풀려요</div></div>}
 
       <div className="sec-h">계정</div>
+      <Link className="row" to="/notices"><span className="fl t plain">알림</span>
+        {notices().some(n => !n.read_at) && <span className="badge num" aria-label="읽지 않은 알림">{notices().filter(n => !n.read_at).length}</span>}
+        <span className="chev"><Icon n="chev" cls="sm" /></span></Link>
       <button className="row" onClick={pw}><span className="fl t plain">비밀번호 변경</span><span className="chev"><Icon n="chev" cls="sm" /></span></button>
       <button className="row" role="switch" aria-checked={u.location} onClick={loc}><span className="fl"><span className="t plain">위치 정보 이용</span><span className="s">내 위치로 지도를 옮길 때만 써요</span></span>
         <span className={`switch ${u.location ? 'on' : ''}`} /></button>
       {/* 메뉴 숨김은 편의, 실제 차단은 RLS */}
       {u.admin && <Link className="row admin-row" to="/admin"><span className="thumb tint md"><Icon n="shield" /></span><span className="fl"><span className="t">리뷰 검토</span><span className="s">운영자 전용</span></span><span className="chev"><Icon n="chev" cls="sm" /></span></Link>}
+      {u.admin && <Link className="row admin-row" to="/appeals"><span className="thumb tint md"><Icon n="mail" /></span><span className="fl"><span className="t">이의 제기</span><span className="s">운영자 전용 · 대기 {appeals().filter(a => a.status === 'open').length}건</span></span><span className="chev"><Icon n="chev" cls="sm" /></span></Link>}
+      {u.admin && <Link className="row admin-row" to="/trash"><span className="thumb tint md"><Icon n="trash" /></span><span className="fl"><span className="t">휴지통</span><span className="s">운영자 전용 · {trash().length}개 · 7일 보관</span></span><span className="chev"><Icon n="chev" cls="sm" /></span></Link>}
 
       <div className="sec-h">정보</div>
       {[['terms', '서비스 이용약관'], ['privacy', '개인정보 처리방침'], ['review', '리뷰 작성 원칙'], ['data', '장소 데이터 출처']].map(([k, nm]) =>

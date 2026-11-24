@@ -34,25 +34,29 @@ export const REGIONS = [['성수동', ...CENTER], ['연남동', 37.5662, 126.923
 export const region = () => { const r = DB.get('region', null); return Array.isArray(r) && r.length === 3 ? r : REGIONS[0]; };
 
 // ---------- 서버 데이터 ----------
-let S = { user: null, pins: [], reviews: [], lists: [], cats: [], nick: new Map(), likes: new Map(), ai: [], ready: false };
+let S = { user: null, pins: [], reviews: [], lists: [], cats: [], nick: new Map(), likes: new Map(), ai: [], notices: [], appeals: [], trash: [], ready: false };
 const t = s => Date.parse(s);
 
 export async function refresh() {
   if (!supabase) { S.ready = true; return changed(); }
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user || null, admin = user?.app_metadata?.role === 'admin';
-  const [p, r, l, pr, lk, rp, ai, ct, pp] = await Promise.all([
+  const [p, r, l, pr, lk, rp, ai, ct, pp, nt, ap, tr] = await Promise.all([
     supabase.from('pins').select('*'),
     supabase.from('reviews').select('*'),
     supabase.from('lists').select('*'),
     supabase.from('profiles').select('id,nick,avatar,created_at'),
     supabase.rpc('like_counts'),
-    user ? supabase.from('reports').select('review_id,reporter,reason') : { data: [] },
+    user ? supabase.from('reports').select('id,review_id,reporter,reason') : { data: [] },
     admin ? supabase.from('review_ai_checks').select('*') : { data: [] },
     supabase.from('categories').select('name,icon').order('sort').order('name'),
-    user ? supabase.from('pin_reports').select('pin_id,reporter,reason') : { data: [] },
+    user ? supabase.from('pin_reports').select('id,pin_id,reporter,reason') : { data: [] },
+    // 내 처리 알림 (운영자도 자기 것만), 이의 제기(내 것, 운영자는 전부 + 알림 내용), 휴지통(운영자만)
+    user ? supabase.from('notices').select('*').eq('user_id', user.id).order('created_at', { ascending: false }) : { data: [] },
+    user ? supabase.from('appeals').select('*, notice:notices(*)').order('created_at', { ascending: false }) : { data: [] },
+    admin ? supabase.from('trash').select('*').order('deleted_at', { ascending: false }) : { data: [] },
   ]);
-  const err = [p, r, l, pr, lk, rp, ai, ct, pp].find(x => x.error)?.error;
+  const err = [p, r, l, pr, lk, rp, ai, ct, pp, nt, ap, tr].find(x => x.error)?.error;
   if (err) throw err;
   const reps = rp.data;
   S = {
@@ -61,12 +65,13 @@ export async function refresh() {
     likes: new Map(lk.data.map(x => [x.pin_id, Number(x.n)])),
     pins: p.data.map(x => ({ id: x.id, name: x.name, cat: x.cat, kind: x.place_id ? '장소' : '위치', placeId: x.place_id, lat: x.lat, lng: x.lng,
       desc: x.description, photos: x.photos, ad: x.ad, author: x.author, created: t(x.created_at),
-      reports: pp.data.filter(y => y.pin_id === x.id).map(y => ({ by: y.reporter, reason: y.reason })) })),
+      reports: pp.data.filter(y => y.pin_id === x.id).map(y => ({ id: y.id, by: y.reporter, reason: y.reason })) })),
     reviews: r.data.map(x => ({ id: x.id, pin: x.pin_id, by: x.author, body: x.body, ad: x.ad, photos: x.photos, hidden: x.hidden,
       adminLabel: x.admin_label, decision: x.admin_decision, reportCount: x.report_count, at: t(x.created_at),
-      reports: reps.filter(y => y.review_id === x.id).map(y => ({ by: y.reporter, reason: y.reason })) })),
+      reports: reps.filter(y => y.review_id === x.id).map(y => ({ id: y.id, by: y.reporter, reason: y.reason })) })),
     lists: l.data.map(x => ({ id: x.id, name: x.name, owner: x.owner, public: x.is_public, token: x.share_token, pins: x.pin_ids, updated: t(x.updated_at) })),
     ai: ai.data,
+    notices: nt.data, appeals: ap.data, trash: tr.data,
     cats: ct.data,
     user: user && { id: user.id, email: user.email, nick: '', created: t(user.created_at), location: user.user_metadata?.location !== false, admin },
   };
@@ -86,6 +91,11 @@ export const pins = () => S.pins;
 export const reviews = () => S.reviews;
 export const lists = () => S.lists;
 export const aiChecks = () => S.ai;
+export const notices = () => S.notices;
+export const appeals = () => S.appeals;
+export const trash = () => S.trash;
+// 신고 번호: 리뷰 신고 R-12, 핀 신고 P-3
+export const reportNo = (kind, id) => `${kind === 'pin' ? 'P' : 'R'}-${id}`;
 // 카테고리 [{name, icon}] — 운영자가 관리해요 (categories 테이블)
 export const cats = () => S.cats;
 export const catIcon = name => S.cats.find(c => c.name === name)?.icon || '';

@@ -11,6 +11,9 @@ import Feed from './pages/Feed.jsx';
 import Me from './pages/Me.jsx';
 import Region from './pages/Region.jsx';
 import Admin from './pages/Admin.jsx';
+import Trash from './pages/Trash.jsx';
+import Notices from './pages/Notices.jsx';
+import Appeals from './pages/Appeals.jsx';
 import { List, Lists, Mine, Shared } from './pages/Lists.jsx';
 import { Login, Signup, Terms, Verify } from './pages/Auth.jsx';
 import { refresh } from './lib/store.js';
@@ -67,6 +70,9 @@ createRoot(document.getElementById('root')).render(
       <Route path="/signup" element={<Signup />} />
       <Route path="/verify" element={<Verify />} />
       <Route path="/admin" element={<Admin />} />
+      <Route path="/trash" element={<Trash />} />
+      <Route path="/notices" element={<Notices />} />
+      <Route path="/appeals" element={<Appeals />} />
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
   </HashRouter>,
