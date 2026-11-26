@@ -1,14 +1,13 @@
-// 로그인 · 약관 동의 · 회원가입 · 이메일 인증 (Supabase Auth)
-import { useEffect, useRef, useState } from 'react';
+// 로그인 · 약관 동의 · 회원가입 (Supabase Auth, 이메일 인증 없이 바로 로그인)
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { refresh } from '../lib/store.js';
 import { supabase } from '../supabase.js';
 import { log } from '../lib/log.js';
 import { BackBtn, Icon, Screen, clean, openDoc, ui } from '../ui/kit.jsx';
 
-// 인증 메일 링크가 돌아올 곳: 지금 주소에서 #… 를 뺀 앱 첫 화면
+// 비밀번호 재설정 메일 링크가 돌아올 곳: 지금 주소에서 #… 를 뺀 앱 첫 화면
 const appUrl = () => location.origin + location.pathname;
-const resend = email => supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: appUrl() } });
 
 function PwInput({ id, value, onChange, auto, placeholder = '비밀번호' }) {
   const [show, setShow] = useState(false);
@@ -16,27 +15,12 @@ function PwInput({ id, value, onChange, auto, placeholder = '비밀번호' }) {
     <button type="button" className="aside" onClick={() => setShow(!show)}>{show ? '숨기기' : '보기'}</button></>;
 }
 
-// 인증 메일 재발송: 60초 쿨다운
-function ResendBtn({ cls, email }) {
-  const [wait, setWait] = useState(0), t = useRef(null);
-  useEffect(() => () => clearInterval(t.current), []);
-  const click = async () => {
-    if (wait) return;
-    const { error } = await resend(email);
-    if (error) return ui.toast(error.status === 429 ? '잠시 후 다시 보내 주세요' : '메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요');
-    ui.toast('인증 메일을 다시 보냈어요');
-    setWait(60);
-    t.current = setInterval(() => setWait(w => { if (w <= 1) clearInterval(t.current); return w - 1; }), 1000);
-  };
-  return <button type="button" className={cls} disabled={!!wait} onClick={click}>{wait ? `${wait}초 후 다시 보낼 수 있어요` : '인증 메일 다시 보내기'}</button>;
-}
-
 // ---------- 로그인: 성공하면 원래 화면(next)으로 ----------
 export function Login() {
   const [sp] = useSearchParams(), nav = useNavigate();
   const next = sp.get('next') || '/home';
   const [email, setEmail] = useState(sp.get('email') || ''), [pw, setPw] = useState('');
-  const [err, setErr] = useState(''), [unverified, setUnverified] = useState(''), [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(''), [busy, setBusy] = useState(false);
   const submit = async e => {
     e.preventDefault();
     const em = email.trim().toLowerCase();
@@ -45,9 +29,8 @@ export function Login() {
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email: em, password: pw });
     setBusy(false);
-    setUnverified(error?.code === 'email_not_confirmed' ? em : '');
-    if (error && error.code !== 'invalid_credentials' && error.code !== 'email_not_confirmed') log('login', error);
-    if (error) return setErr(error.code === 'email_not_confirmed' ? '' : error.status === 429 ? '시도가 너무 많아요. 잠시 후 다시 해 주세요.' : '이메일 또는 비밀번호가 맞지 않아요.');
+    if (error && error.code !== 'invalid_credentials') log('login', error);
+    if (error) return setErr(error.status === 429 ? '시도가 너무 많아요. 잠시 후 다시 해 주세요.' : '이메일 또는 비밀번호가 맞지 않아요.');
     await refresh();
     nav(next, { replace: true });
   };
@@ -61,8 +44,6 @@ export function Login() {
     <div className="top"><span className="brand">Pin it!</span><BackBtn to="/home" icon="close" label="닫기" /></div>
     <form className="body pad" noValidate onSubmit={submit}>
       <h1 className="h1 login-title">다시 만나서 반가워요</h1>
-      {unverified && <div className="notice warn gap-b"><b>이메일 인증이 필요해요</b>
-        <div className="s">{unverified} 메일함의 인증 링크를 눌러 주세요.</div><ResendBtn cls="btn sm line" email={unverified} /></div>}
       <div className="field"><label htmlFor="email">이메일</label>
         <div className="control"><input id="email" type="email" inputMode="email" autoComplete="email" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} /></div></div>
       <div className="field"><label htmlFor="pw">비밀번호</label>
@@ -94,8 +75,8 @@ export function Terms() {
   return <Screen title="회원가입">
     <div className="top"><BackBtn to="/login" /><span className="ttl">회원가입</span></div>
     <div className="body pad tight-top">
-      <div className="steps"><i className="on" /><i /><i /></div>
-      <div className="step-t">1 / 3 · 약관 동의</div>
+      <div className="steps"><i className="on" /><i /></div>
+      <div className="step-t">1 / 2 · 약관 동의</div>
       <h1 className="h1">Pin it! 이용을 위해<br />동의가 필요해요</h1>
       <button className={`check agree-all ${all ? 'on' : ''}`} onClick={() => setSt(Object.fromEntries(ITEMS.map(([k]) => [k, !all])))}>
         <span className="box"><Icon n="check" /></span><span className="fl"><b>전체 동의</b><span className="note">선택 항목을 포함해 모두 동의해요</span></span></button>
@@ -127,28 +108,29 @@ export function Signup() {
     const em = email.toLowerCase(), next = sp.get('next');
     setBusy(true);
     const { data, error } = await supabase.auth.signUp({ email: em, password: f.pw,
-      options: { data: { nick, location: !!consent?.location }, emailRedirectTo: appUrl() } });
+      options: { data: { nick, location: !!consent?.location } } });
     setBusy(false);
     if (error) return ui.toast(error.status === 429 ? '가입 요청이 너무 많아요. 잠시 후 다시 해 주세요'
       : error.code === 'email_address_not_authorized' ? '베타 기간에는 초대된 이메일만 가입할 수 있어요' : error.code === 'weak_password' ? '더 어려운 비밀번호를 써 주세요' : '가입하지 못했어요. 잠시 후 다시 시도해 주세요');
     clean();
-    // 이메일 인증을 끈 프로젝트면 바로 로그인돼요
+    // 이메일 인증 없이 바로 로그인돼요 (Supabase Confirm email 꺼짐)
     if (data.session) { await refresh(); return nav((next || '/home') + (next?.includes('?') ? '&' : '?') + 'toast=' + encodeURIComponent('가입을 환영해요!'), { replace: true }); }
-    // 이미 가입된 이메일도 같은 다음 화면으로 → 계정 존재를 드러내지 않음 (PRD 5-5)
-    nav('/verify?email=' + encodeURIComponent(em) + (next ? '&next=' + encodeURIComponent(next) : ''));
+    // 세션이 없으면 이미 가입된 이메일(또는 Supabase에서 인증이 아직 켜짐) → 로그인 화면으로
+    ui.toast('이미 가입된 이메일이면 로그인해 주세요');
+    nav('/login?email=' + encodeURIComponent(em) + (next ? '&next=' + encodeURIComponent(next) : ''), { replace: true });
   };
   return <Screen guard title="회원가입">
     <div className="top"><BackBtn to="/terms" /><span className="ttl">회원가입</span></div>
     <form id="signup" className="body pad tight-top" noValidate onSubmit={submit}>
-      <div className="steps"><i className="on" /><i className="on" /><i /></div>
-      <div className="step-t">2 / 3 · 정보 입력</div>
+      <div className="steps"><i className="on" /><i className="on" /></div>
+      <div className="step-t">2 / 2 · 정보 입력</div>
       <h1 className="h1">사용할 정보를 입력해 주세요</h1>
       <div className="field"><label htmlFor="nick">닉네임</label>
         <div className={`control ${nick && !nOk ? 'bad' : ''}`}><input id="nick" maxLength={12} autoComplete="nickname" placeholder="2~12자" value={f.nick} onChange={e => set('nick')(e.target.value)} /><span className="aside num">{nick.length}/12</span></div>
         <div className={`hint ${nick ? (nOk ? 'good' : 'bad') : ''}`}>{nick ? (nOk ? '사용할 수 있어요' : '한글·영문·숫자·_ 2~12자로 입력해 주세요') : '리뷰와 공개 리스트에 이메일 대신 보여요.'}</div></div>
       <div className="field"><label htmlFor="email">이메일</label>
         <div className={`control ${email && !eOk ? 'bad' : ''}`}><input id="email" type="email" inputMode="email" autoComplete="email" placeholder="name@example.com" value={f.email} onChange={e => set('email')(e.target.value)} /></div>
-        <div className={`hint ${email && !eOk ? 'bad' : ''}`}>{email && !eOk ? '이메일 형식을 확인해 주세요' : '가입 후 이 주소로 인증 메일을 보내요.'}</div></div>
+        <div className={`hint ${email && !eOk ? 'bad' : ''}`}>{email && !eOk ? '이메일 형식을 확인해 주세요' : '로그인할 때 써요.'}</div></div>
       <div className="field"><label htmlFor="pw">비밀번호</label>
         <div className="control"><PwInput id="pw" value={f.pw} onChange={set('pw')} auto="new-password" /></div>
         <div className="rules"><span className={len ? 'ok' : ''}><Icon n="check" cls="xs" />8자 이상</span><span className={mix ? 'ok' : ''}><Icon n="check" cls="xs" />영문·숫자 포함</span></div></div>
@@ -157,30 +139,5 @@ export function Signup() {
         <div className={`hint ${f.pw2 ? (match ? 'good' : 'bad') : ''}`}>{f.pw2 ? (match ? '비밀번호가 일치해요' : '비밀번호가 일치하지 않아요') : ''}</div></div>
     </form>
     <div className="cta"><button className="btn" form="signup" type="submit" disabled={!ok}>가입하기</button></div>
-  </Screen>;
-}
-
-// ---------- 이메일 인증 안내: 메일의 링크를 누르면 앱으로 돌아와 로그인돼요 ----------
-export function Verify() {
-  const [sp] = useSearchParams(), nav = useNavigate(), email = sp.get('email') || '';
-  const change = () => nav('/signup');
-  const done = () => {
-    const next = sp.get('next');
-    nav('/login?email=' + encodeURIComponent(email) + (next ? '&next=' + encodeURIComponent(next) : ''));
-  };
-  return <Screen title="이메일 인증">
-    <div className="top"><BackBtn to="/signup" /><span className="ttl">회원가입</span></div>
-    <div className="body pad tight-top">
-      <div className="steps"><i className="on" /><i className="on" /><i className="on" /></div>
-      <div className="step-t">3 / 3 · 이메일 인증</div>
-      <h1 className="h1">메일함에서 인증 링크를<br />눌러 주세요</h1>
-      <div className="notice info mail-card"><span className="thumb tint md"><Icon n="mail" /></span>
-        <div className="fl"><b className="ell">{email}</b><div className="s">으로 인증 메일을 보냈어요</div></div></div>
-      <ul className="tips"><li>메일이 보이지 않으면 스팸함을 확인해 주세요.</li><li>인증 링크는 24시간 동안 쓸 수 있어요.</li></ul>
-      <div className="grow" />
-      <ResendBtn cls="btn sec" email={email} />
-      <button className="text-link center" onClick={change}>이메일 주소 바꾸기</button>
-    </div>
-    <div className="cta"><button className="btn" onClick={done}>인증했어요, 로그인하기</button></div>
   </Screen>;
 }

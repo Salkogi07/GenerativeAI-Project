@@ -8,10 +8,10 @@ const T0 = Date.now();
 
 const SEED = {
   users: [
-    { email: 'demo@pinit.kr', pw: 'pinit1234', nick: 'jiyul', verified: true, created: T0 - 3 * DAY },
-    { email: 'admin@pinit.kr', pw: 'pinit1234', nick: '운영팀', verified: true, created: T0 - 60 * DAY, admin: true },
-    { email: 'minji@pinit.kr', pw: 'pinit1234', nick: 'minji', verified: true, created: T0 - 40 * DAY },
-    { email: 'jaemin@pinit.kr', pw: 'pinit1234', nick: 'jaemin', verified: true, created: T0 - 30 * DAY },
+    { email: 'demo@pinit.kr', pw: 'pinit1234', nick: 'jiyul', created: T0 - 3 * DAY },
+    { email: 'admin@pinit.kr', pw: 'pinit1234', nick: '운영팀', created: T0 - 60 * DAY, admin: true },
+    { email: 'minji@pinit.kr', pw: 'pinit1234', nick: 'minji', created: T0 - 40 * DAY },
+    { email: 'jaemin@pinit.kr', pw: 'pinit1234', nick: 'jaemin', created: T0 - 30 * DAY },
   ],
   pins: [
     { id: 'p1', name: '카페 하루결', cat: '카페', kind: '장소', placeId: 'k1', lat: 37.5448, lng: 127.0560, desc: '2층 창가 자리가 조용해요. 주말 오후엔 웨이팅이 있어요.', photos: ['ph-3', 'ph-1'], author: 'jaemin@pinit.kr', created: T0 - 20 * DAY },

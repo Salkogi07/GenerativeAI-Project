@@ -6,7 +6,7 @@ function render() {
   $('#member').hidden = false;
   $('#av').textContent = u.nick[0].toUpperCase();
   $('#nick').textContent = u.nick;
-  $('#email').textContent = `${u.email} · 인증 완료`;
+  $('#email').textContent = u.email;
   const j = new Date(u.created);
   $('#joined').textContent = `${j.getFullYear()}.${j.getMonth() + 1}.${j.getDate()} 가입`;
   $('#sPins').textContent = pins().filter(p => p.author === u.email).length;

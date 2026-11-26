@@ -92,7 +92,7 @@ export default function Me() {
       <div className="profile">
         <button className="avatar-btn" aria-label="프로필 사진 바꾸기" onClick={avatarMenu}><Avatar id={u.id} cls="lg" /><span className="badge"><Icon n="camera" /></span></button>
         <input ref={file} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={e => { const f = e.target.files[0]; e.target.value = ''; if (f) setAvatar(f); }} />
-        <div className="fl"><div className="p-nick">{u.nick}</div><div className="p-mail ell">{u.email} · 인증 완료</div>
+        <div className="fl"><div className="p-nick">{u.nick}</div><div className="p-mail ell">{u.email}</div>
           <div className="p-date">{j.getFullYear()}.{j.getMonth() + 1}.{j.getDate()} 가입</div></div>
         <button className="btn sm sec" onClick={editNick}>수정</button>
       </div>

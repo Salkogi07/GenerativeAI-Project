@@ -13,7 +13,7 @@ function check() {
   if (nick) hint($('#hNick'), nOk ? '사용할 수 있어요' : '한글·영문·숫자·_ 2~12자로 입력해 주세요', nOk ? 'good' : 'bad');
   else hint($('#hNick'), '리뷰와 공개 리스트에 이메일 대신 보여요.');
   $('#cNick').classList.toggle('bad', !!nick && !nOk);
-  if (email) hint($('#hEmail'), eOk ? '가입 후 이 주소로 인증 메일을 보내요.' : '이메일 형식을 확인해 주세요', eOk ? '' : 'bad');
+  if (email) hint($('#hEmail'), eOk ? '로그인할 때 써요.' : '이메일 형식을 확인해 주세요', eOk ? '' : 'bad');
   $('#cEmail').classList.toggle('bad', !!email && !eOk);
   $('#rLen').classList.toggle('ok', len);
   $('#rMix').classList.toggle('ok', mix);
@@ -29,11 +29,13 @@ $('#f').onsubmit = e => {
   check();
   if ($('#submit').disabled) return;
   const email = $('#email').value.trim().toLowerCase(), all = users();
-  // 이미 가입된 이메일도 같은 다음 화면으로 → 계정 존재를 드러내지 않음 (PRD 5-5)
-  if (!all.some(u => u.email === email)) {
-    all.push({ email, pw: $('#pw').value, nick: $('#nick').value.trim(), verified: false, created: Date.now(), location: consent.location });
-    save('users', all);
-  }
   clean();
-  go('verify.html?email=' + encodeURIComponent(email) + (qs.get('next') ? '&next=' + encodeURIComponent(qs.get('next')) : ''));
+  // 이미 가입된 이메일이면 로그인 화면으로
+  if (all.some(u => u.email === email)) return go('login.html?email=' + encodeURIComponent(email) + (qs.get('next') ? '&next=' + encodeURIComponent(qs.get('next')) : '') + '&toast=' + encodeURIComponent('이미 가입된 이메일이면 로그인해 주세요'));
+  // 이메일 인증 없이 바로 로그인
+  all.push({ email, pw: $('#pw').value, nick: $('#nick').value.trim(), created: Date.now(), location: consent.location });
+  save('users', all);
+  DB.set('session', email);
+  const next = qs.get('next') || 'home.html';
+  go(next + (next.includes('?') ? '&' : '?') + 'toast=' + encodeURIComponent('가입을 환영해요!'));
 };

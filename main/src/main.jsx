@@ -15,24 +15,24 @@ import Trash from './pages/Trash.jsx';
 import Notices from './pages/Notices.jsx';
 import Appeals from './pages/Appeals.jsx';
 import { List, Lists, Mine, Shared } from './pages/Lists.jsx';
-import { Login, Signup, Terms, Verify } from './pages/Auth.jsx';
+import { Login, Signup, Terms } from './pages/Auth.jsx';
 import { refresh } from './lib/store.js';
 import { supabase } from './supabase.js';
 import { ui } from './ui/kit.jsx';
 import { problem } from './lib/log.js';
 
-// 로그인 상태가 바뀌면(로그인·로그아웃·인증 메일 링크) 다시 불러와요
+// 로그인 상태가 바뀌면(로그인·로그아웃·비밀번호 재설정 링크) 다시 불러와요
 async function init() {
   if (supabase) {
     supabase.auth.onAuthStateChange(ev => {
       setTimeout(() => refresh().catch(() => {}), 0); // 콜백 안에서 바로 Supabase를 부르면 멈출 수 있어요
       if (ev === 'PASSWORD_RECOVERY') setTimeout(newPassword, 300);
     });
-    await supabase.auth.getSession(); // 인증 메일 링크(?code=)를 처리할 때까지 기다려요
+    await supabase.auth.getSession(); // 비밀번호 재설정 메일 링크(?code=)를 처리할 때까지 기다려요
     const q = new URLSearchParams(location.search);
     if (q.has('code') || q.has('error')) {
       history.replaceState(null, '', location.pathname + location.hash);
-      setTimeout(() => ui.toast(q.has('error') ? '인증 링크가 만료됐어요. 로그인해서 다시 받아 주세요' : '이메일 인증이 끝났어요'), 300);
+      if (q.has('error')) setTimeout(() => ui.toast('링크가 만료됐어요. 다시 받아 주세요'), 300);
     }
   }
   await refresh().catch(e => problem('데이터를 불러오지 못했어요. 키가 맞는지 확인하고 새로고침해 주세요.', 'refresh', e));
@@ -68,7 +68,6 @@ createRoot(document.getElementById('root')).render(
       <Route path="/login" element={<Login />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/signup" element={<Signup />} />
-      <Route path="/verify" element={<Verify />} />
       <Route path="/admin" element={<Admin />} />
       <Route path="/trash" element={<Trash />} />
       <Route path="/notices" element={<Notices />} />
